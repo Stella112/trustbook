@@ -59,6 +59,22 @@ Self-run sponsor key, pending Maris's decision. It needs no extra service, match
 ## Gemini
 `@google/genai` installed. `models.list` and `generateContent` typecheck in `scripts/check-gemini.ts`. No key, so no model list and no model chosen.
 
+## Keyed run, 4 Nov 2026 (LIVE; supersedes SKIPPED and anonymous notes above)
+- Tatum with `x-api-key`: checkpoint, tx by digest, balance, metadata and object reads pass.
+- Balance change shape confirmed on a real tx: `amount` (signed string), `coinType.repr` (full 64-hex address form), `owner.address`. Compare coin types after normalising addresses.
+- USDC→NGN rate: HTTP 200, `value` 1345.41476546, `source` CoinGecko. `value` is a decimal string; do not parse it into a float for money.
+- Gemini: `gemini-3.8-flash` returned 503 twice (high demand). `gemini-3.5-flash` parsed the Pidgin sentence to the schema: Tunde, 9000. `GEMINI_MODEL=gemini-3.5-flash`. App needs retries/fallback.
+- Walrus: 401 `AUTH_REJECTED`. Private key derives `MEMWAL_AGENT_ID`, but `MEMWAL_ACCOUNT_ID` is not an object on mainnet. Awaiting the correct ID.
+- Sponsor wallet: 0.021 SUI, 0 USDC. Too little for the remaining tests.
+
+## Walrus and recovery spike, 4 Nov 2026 (LIVE, mainnet; supersedes the Walrus 401 note)
+- Account ID must be the dashboard's Account ID, not the connected wallet. Object type `...::account::MemWalAccount`; delegate key is in it.
+- 4 confirmed test memories. Write times: 25.7s, 36.2s, 22.3s, 17.6s. Example blob: `glx6zeZf82cbbbYlsIGZAPrB8hEy0_H3NO_X9-39198`.
+- `recall` and `restore` with limit=500 were accepted, not rejected. With so few records this does **not** reveal any cap.
+- `listMemories` returned all 3 records with blob IDs. `end_epoch` and `expires_at` were **null**, so expiry display is not available from it yet (at least for fresh writes).
+- Spike: 3 chained records sealed; a separate process given only the namespace plus credentials found 3/3, and hashes, chain and tamper detection passed.
+- **Not proven:** `restore` reported `restored: 0, skipped: 3` because the relayer's index still held them. We cannot wipe that index, so restore rebuilding an empty index is untested, and reads still depend on the relayer. Dates were supplied to the rebuild, not discovered. Path A not tested. Multi-namespace/owner cap not tested at scale.
+
 ## Not done
 | Required check | State |
 |---|---|
