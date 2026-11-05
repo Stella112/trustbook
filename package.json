@@ -4,7 +4,8 @@
   "type": "module",
   "packageManager": "pnpm@10.34.6",
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "pnpm -r --if-present test"
   },
   "dependencies": {
     "@google/genai": "^2.32.0",
@@ -21,6 +22,7 @@
     "@types/node": "^26.6.6",
     "dotenv": "^18.0.9",
     "tsx": "^4.23.15",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
   }
 }
