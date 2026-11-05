@@ -157,7 +157,12 @@ export function positionAt(entries: readonly Entry[], settings: ShopSettings, as
   };
 }
 
-export function monthSummary(entries: readonly Entry[], settings: ShopSettings, month: string) {
-  const { from, to } = monthRange(month);
-  return { month, period: summarizePeriod(entries, settings, from, to), position: positionAt(entries, settings, to) };
+/**
+ * A month's totals, and the shop's position at the month's end. For the current month pass `asOf`
+ * (today), so totals and overdue amounts stop at today rather than a future month end.
+ */
+export function monthSummary(entries: readonly Entry[], settings: ShopSettings, month: string, asOf?: string) {
+  const range = monthRange(month);
+  const to = asOf && asOf < range.to ? asOf : range.to;
+  return { month, period: summarizePeriod(entries, settings, range.from, to), position: positionAt(entries, settings, to) };
 }

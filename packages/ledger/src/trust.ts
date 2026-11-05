@@ -42,9 +42,12 @@ export function trustLabel(state: DebtState, customerId: string, override?: Trus
 
   const lateDays = lateness.filter((x) => x > 0);
   const parts = [n === 0 ? "No credit due yet" : `Paid ${onTime} of ${n} on time`];
-  if (lateDays.length) parts.push(`usually ${median(lateDays)} days late`);
+  if (lateDays.length) {
+    const days = median(lateDays);
+    parts.push(`usually ${days} day${days === 1 ? "" : "s"} late`);
+  }
   if (brokenPromises60d) parts.push(`${brokenPromises60d} promise${brokenPromises60d > 1 ? "s" : ""} broken`);
-  if (maxOverdueDays > 0) parts.push(`oldest unpaid debt ${maxOverdueDays} days overdue`);
+  if (maxOverdueDays > 0) parts.push(`oldest unpaid debt ${maxOverdueDays} day${maxOverdueDays === 1 ? "" : "s"} overdue`);
 
   const finalLabel = override ?? label;
   return {
