@@ -90,14 +90,17 @@ Self-run sponsor key, pending Maris's decision. It needs no extra service, match
   - Relayer-written records stay on the committee server and still need the Enoki key.
 - **Path A over open servers: passed once end to end (5 Nov 2026).** `scripts/check-open-seal-walrus.ts` sealed one demo record with threshold 1 of 2, stored it through `/api/remember/manual` in 25.6s, and got blob `q_q0JELQoWr-e2yCG95MLbM0jbk9QGn5oONcpwSzrMU`. New processes downloaded it from the aggregator and decrypted it with no relayer, through Studio Mirai alone, Overclock alone, and both configured. `listMemories` found it by namespace, status `active`.
   - No API key, embedding provider or WAL from us. The relayer accepted a 1536-value hash-derived vector in place of an embedding. That tolerance is undocumented and could change.
-  - Do not ship the hash of record text as the vector: on guessable records it could let the relayer confirm a guess. Use a random vector.
+  - Do not ship the hash of record text as the vector: on guessable records it could let the relayer confirm a guess. The script now uses a random vector; a second record, blob `b3G_GrrowxF4p_fu5TEn4wYZqWoTiBn9-0XbOcWjxzc`, stored in 33.2s and decrypted with no relayer.
   - Text `recall` will not work for these records. Discovery uses `listMemories`, which needs the relayer. Reading with no relayer needs blob IDs kept elsewhere.
   - Threshold 1 means either server alone can release the key, and the record is readable while one is up. Threshold 2 requires both, and Overclock was flaky in earlier runs. Design decision pending.
-  - **Not proven:** retention (`end_epoch` and `expires_at` were null earlier), `restore` on these records, behaviour at scale, open-server rate limits and terms.
+  - **Retention:** `listMemories` on the first record, about 36 minutes after writing, returned `end_epoch` 58 and `expires_at` 2027-06-03, about 7 months. These fields were null on fresh writes earlier, so they fill in after a delay. A ledger needs renewal or re-writing before expiry; who can renew, and at what cost, is not verified.
+  - A second aggregator (`wal-aggregator-mainnet.staketab.org`) also returned HTTP 200 for the first blob, so reads are not tied to one aggregator.
+  - `restore` returned `restored: 0, skipped: 1, failed: 0`. The relayer already had the record indexed, so rebuilding an empty index remains unproven.
+  - **Not proven:** renewal, `restore` on an empty index, behaviour at scale, open-server rate limits and terms.
 
 ## Not done
 | Required check | State |
 |---|---|
 | Path A, relayer-written records | Blocked on a paid Enoki key |
-| Path A, open servers | Passed for one record; retention, restore and scale not tested |
+| Path A, open servers | Passed for two records; renewal, empty-index restore and scale not tested |
 | Real recall and restore caps, write latency | Not run |

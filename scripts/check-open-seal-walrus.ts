@@ -1,8 +1,9 @@
 // Path A over the open Seal servers, using a test record. No embedding provider and no API key.
 // write:           seal locally (either server can decrypt), then store through the relayer.
 // list <ns>:       find blob IDs by namespace (this mode uses the relayer).
+// inspect <ns> <blob>: print retention fields and run restore (uses the relayer).
 // read <blob> [server]: decrypt with no relayer, from the blob ID and account credentials alone.
-import { createHash } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import { MemWal } from "@mysten-incubation/memwal";
 import { MemWalManual } from "@mysten-incubation/memwal/manual";
 import { EncryptedObject, SealClient, SessionKey } from "@mysten/seal";
@@ -22,13 +23,10 @@ const raw = process.env.MEMWAL_PRIVATE_KEY!;
 const signer = Ed25519Keypair.fromSecretKey(raw.startsWith("suiprivkey") ? raw : fromHex(raw));
 const VECTOR_SIZE = Number(process.env.VECTOR_SIZE || 1536);
 
-/** A unit vector derived from a hash, so record text never reaches an embedding provider. */
-function hashVector(text: string): number[] {
-  const out: number[] = [];
-  for (let i = 0; out.length < VECTOR_SIZE; i++) {
-    const h = createHash("sha256").update(`${i}:${text}`).digest();
-    for (let j = 0; j + 4 <= h.length && out.length < VECTOR_SIZE; j += 4) out.push(h.readInt32LE(j) / 2 ** 31);
-  }
+/** A random unit vector, so nothing about the record reaches the relayer or an embedding provider. */
+function randomVector(): number[] {
+  const b = randomBytes(VECTOR_SIZE * 4);
+  const out = Array.from({ length: VECTOR_SIZE }, (_, i) => b.readInt32LE(i * 4) / 2 ** 31);
   const norm = Math.hypot(...out);
   return out.map((v) => v / norm);
 }
@@ -48,7 +46,7 @@ if (mode === "write") {
     sealThreshold: 1,
     namespace,
   });
-  (manual as any).embed = async (text: string) => hashVector(text);
+  (manual as any).embed = async () => randomVector();
   const text = `TRUSTBOOK-DAY open-seal-test 2026-11-05\n${JSON.stringify({ v: 1, demo: true, note: "Path A test record" })}`;
   const t0 = Date.now();
   const res = await manual.rememberManual(text, namespace);
@@ -59,6 +57,13 @@ if (mode === "write") {
   const m = MemWal.create({ key: raw, accountId, namespace: arg, serverUrl: RELAYER });
   const page = await m.listMemories({ namespace: arg });
   report("found by namespace", page.memories.length ? "PASS" : "FAIL", page.memories.map((x) => ({ blob: x.blob_id, status: x.status })));
+} else if (mode === "inspect" && arg && serverName) {
+  const m = MemWal.create({ key: raw, accountId, namespace: arg, serverUrl: RELAYER });
+  const page = await m.listMemories({ namespace: arg });
+  console.log("summary:", JSON.stringify(page.memories));
+  const head = await fetch(`${AGGREGATOR}/v1/blobs/${serverName}`, { method: "HEAD" });
+  console.log("aggregator:", head.status, JSON.stringify(Object.fromEntries(head.headers)));
+  console.log("restore:", JSON.stringify(await m.restore(arg, 10)));
 } else if (mode === "read" && arg) {
   let resp: Response | undefined;
   for (let i = 0; i < 12; i++) {
@@ -100,5 +105,5 @@ if (mode === "write") {
   const plain = new TextDecoder().decode(await seal.decrypt({ data, sessionKey, txBytes }));
   report(`decrypted with no relayer (${serverName ?? "any server"})`, plain.startsWith("TRUSTBOOK-DAY open-seal-test") ? "PASS" : "FAIL", plain.split("\n")[0]);
 } else {
-  console.log("usage: write | list <namespace> | read <blob-id> [server]");
+  console.log("usage: write | list <namespace> | read <blob-id> [server] | inspect <namespace> <blob-id>");
 }
