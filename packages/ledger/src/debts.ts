@@ -71,7 +71,15 @@ export function computeDebts(effective: readonly ReplaceableEntry[], settings: S
       const dueDate = e.promisedDate ?? addDays(on, settings.defaultDueDays);
       // The pay-by date given at sale time is the due date, not a promise record: lateness on it is
       // already measured by the on-time rate, and counting it twice would contradict "Good payer".
-      debts.set(e.id, { saleId: e.id, customerId: e.customerId, saleDate: on, creditKobo, paidKobo: 0, openKobo: creditKobo, dueDate });
+      const debt: Debt = { saleId: e.id, customerId: e.customerId, saleDate: on, creditKobo, paidKobo: 0, openKobo: creditKobo, dueDate };
+      debts.set(e.id, debt);
+      // Credit held from an earlier overpayment is used up against the new debt straight away.
+      const held = credit.get(e.customerId) ?? 0;
+      if (held > 0) {
+        const amount = Math.min(held, debt.openKobo);
+        pay(debt, amount, on);
+        credit.set(e.customerId, held - amount);
+      }
     } else if (e.type === "PROMISE") {
       // A promise for one sale moves that debt's due date; otherwise it covers all the customer's open debts.
       const covered = e.saleId

@@ -23,7 +23,10 @@ export interface PeriodSummary {
 
 export interface Position {
   asOf: string;
+  /** Cash in the shop. Sui payments are excluded: they land in the shop's Sui wallet (approved 6 Nov). */
   cashOnHandKobo: number;
+  /** Naira value, at the payment's rate, of debts paid by Sui into the shop's wallet. */
+  suiWalletKobo: number;
   stockValueKobo: number;
   /** Items in stock whose value is unknown (no purchase price), or that show negative stock. */
   stockWarnings: { itemId: string; problem: "no cost price" | "negative stock" }[];
@@ -32,7 +35,7 @@ export interface Position {
   /** Overpayments held for customers. Reported, not netted, to follow the brief's formula. */
   customerCreditKobo: number;
   supplierOwedKobo: number;
-  /** Cash + stock + receivables − supplier balances. An estimate: label it so in the UI. */
+  /** Cash + Sui wallet + stock + receivables − supplier balances. An estimate: label it so in the UI. */
   netPositionKobo: number;
 }
 
@@ -94,6 +97,7 @@ export function summarizePeriod(entries: readonly Entry[], settings: ShopSetting
 export function positionAt(entries: readonly Entry[], settings: ShopSettings, asOf: string): Position {
   const eff = effectiveEntries(entries).filter((e) => localDate(e.occurredAt, settings.timezone) <= asOf);
   let cash = settings.openingCashKobo;
+  let suiWallet = 0;
   let supplierOwed = 0;
   const onHand = new Map<string, number>();
   const move = (itemId: string, deltaMilli: number) => onHand.set(itemId, (onHand.get(itemId) ?? 0) + deltaMilli);
@@ -104,7 +108,12 @@ export function positionAt(entries: readonly Entry[], settings: ShopSettings, as
         for (const l of e.items) move(l.itemId, -milli(l.qty));
         break;
       case "PAYMENT":
-        cash += e.amountKobo;
+        if (e.method === "sui") suiWallet += e.amountKobo;
+        else cash += e.amountKobo;
+        break;
+      case "SUPPLIER_PAYMENT":
+        cash -= e.amountKobo;
+        supplierOwed -= e.amountKobo;
         break;
       case "PURCHASE":
         cash -= e.paidNowKobo;
@@ -147,13 +156,14 @@ export function positionAt(entries: readonly Entry[], settings: ShopSettings, as
   return {
     asOf,
     cashOnHandKobo: cash,
+    suiWalletKobo: suiWallet,
     stockValueKobo: stockValue,
     stockWarnings: warnings,
     receivablesKobo: receivables,
     overdueKobo: overdue,
     customerCreditKobo: customerCredit,
     supplierOwedKobo: supplierOwed,
-    netPositionKobo: cash + stockValue + receivables - supplierOwed,
+    netPositionKobo: cash + suiWallet + stockValue + receivables - supplierOwed,
   };
 }
 

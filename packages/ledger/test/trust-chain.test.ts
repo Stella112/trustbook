@@ -143,3 +143,14 @@ describe("hash chain", () => {
     expect(entriesRecordedOn([s, c], "2026-11-03", "Africa/Lagos").map((e) => e.id)).toEqual([c.id]);
   });
 });
+
+describe("Careful before New (approved 6 Nov)", () => {
+  it("marks a new customer Careful when a debt is more than 30 days overdue", () => {
+    const r = label(debt("2026-09-01", "2026-09-05"), "2026-10-06");
+    expect(r.considered).toBe(1);
+    expect(r.label).toBe("Careful");
+  });
+  it("keeps a new customer New after one late payment", () => {
+    expect(label(debt("2026-10-01", "2026-10-05", "2026-10-09"), "2026-10-20").label).toBe("New");
+  });
+});

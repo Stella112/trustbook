@@ -209,3 +209,30 @@ describe("position", () => {
     ]);
   });
 });
+
+describe("rule changes approved 6 Nov", () => {
+  it("uses held customer credit against the customer's next credit sale", () => {
+    const s1 = sale("2026-11-01", { paid: 0, customerId: "c9" });
+    const p = payment("2026-11-02", "c9", 130_000);
+    const s2 = sale("2026-11-03", { paid: 0, customerId: "c9" });
+    const state = debtsAt([s1, p, s2], "2026-11-04");
+    expect(state.debts.find((d) => d.saleId === s2.id)).toMatchObject({ openKobo: 70_000, paidKobo: 30_000 });
+    expect(state.balances.get("c9")).toMatchObject({ owedKobo: 70_000, creditKobo: 0 });
+  });
+  it("keeps Sui payments out of cash on hand and counts them in the Sui wallet", () => {
+    const s = sale("2026-11-01", { paid: 0, customerId: "c1" });
+    const sui = { ...payment("2026-11-02", "c1", 100_000), method: "sui" as const };
+    const pos = positionAt([s, sui], settings, "2026-11-03");
+    expect(pos.cashOnHandKobo).toBe(1_000_000);
+    expect(pos.suiWalletKobo).toBe(100_000);
+    expect(pos.receivablesKobo).toBe(0);
+    expect(pos.netPositionKobo).toBe(1_100_000);
+  });
+  it("reduces the supplier balance and cash when a supplier is paid", () => {
+    const buy = purchase("2026-11-01", [{ itemId: "rice", qty: 10, unitCostKobo: 50_000 }], 300_000);
+    const pay: Entry = { ...expense("2026-11-02", 0), type: "SUPPLIER_PAYMENT", amountKobo: 150_000, note: "part" } as never;
+    const pos = positionAt([buy, validateEntry(pay)], settings, "2026-11-03");
+    expect(pos.supplierOwedKobo).toBe(50_000);
+    expect(pos.cashOnHandKobo).toBe(1_000_000 - 300_000 - 150_000);
+  });
+});

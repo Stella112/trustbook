@@ -76,6 +76,15 @@ export const PromiseEntry = z.object({
   promisedDate: LocalDate,
 });
 
+/** Paying off money owed to a supplier for stock bought on credit. Added with Maris's approval, 6 Nov. */
+export const SupplierPaymentEntry = z.object({
+  ...base,
+  type: z.literal("SUPPLIER_PAYMENT"),
+  supplier: z.string().min(1).optional(),
+  amountKobo: Minor.refine((n) => n > 0, "payment must be positive"),
+  note: z.string(),
+});
+
 /** Every entry a correction may put back in place of the one it reverses. */
 export const ReplaceableEntry = z.discriminatedUnion("type", [
   SaleEntry,
@@ -86,6 +95,7 @@ export const ReplaceableEntry = z.discriminatedUnion("type", [
   OwnerOutEntry,
   StockAdjustEntry,
   PromiseEntry,
+  SupplierPaymentEntry,
 ]);
 
 export const CorrectionEntry = z.object({

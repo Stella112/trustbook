@@ -34,9 +34,12 @@ export function trustLabel(state: DebtState, customerId: string, override?: Trus
   ).length;
   const n = considered.length;
 
+  // Approved 6 Nov: the hard warning signs (30+ days overdue, 2 broken promises) apply even to a new
+  // customer; the on-time rate only counts once there are 3 debts to judge.
   let label: TrustLabel;
-  if (n < 3) label = "New";
-  else if (onTime * 100 < 50 * n || maxOverdueDays > 30 || brokenPromises60d >= 2) label = "Careful";
+  if (maxOverdueDays > 30 || brokenPromises60d >= 2) label = "Careful";
+  else if (n < 3) label = "New";
+  else if (onTime * 100 < 50 * n) label = "Careful";
   else if (onTime * 100 >= 80 * n && lateness.reduce((s, x) => s + x, 0) <= 2 * n) label = "Good payer";
   else label = "Sometimes late";
 
