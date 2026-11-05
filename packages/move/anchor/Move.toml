@@ -1,0 +1,3 @@
+[package]
+name = "anchor"
+edition = "2024"

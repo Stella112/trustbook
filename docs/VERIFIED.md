@@ -1,6 +1,6 @@
-# VERIFIED — Phase 0 (status: INCOMPLETE, 4 Nov 2026)
+# VERIFIED — Phase 0 (status: INCOMPLETE, 5 Nov 2026)
 
-No credentials or Sui CLI were available, so nothing has been written to Walrus or sent on-chain yet.
+Early sections predate the credentials and the Sui CLI. Later dated sections supersede them.
 
 Evidence levels: **LIVE** = observed from a real call. **TYPES** = read in the installed package. **DOCS** = official docs only. **NOT VERIFIED** = not proven.
 
@@ -75,12 +75,29 @@ Self-run sponsor key, pending Maris's decision. It needs no extra service, match
 - Spike: 3 chained records sealed; a separate process given only the namespace plus credentials found 3/3, and hashes, chain and tamper detection passed.
 - **Not proven:** `restore` reported `restored: 0, skipped: 3` because the relayer's index still held them. We cannot wipe that index, so restore rebuilding an empty index is untested, and reads still depend on the relayer. Dates were supplied to the rebuild, not discovered. Path A not tested. Multi-namespace/owner cap not tested at scale.
 
+## Anchor, sponsored payment and Path A, 5 Nov 2026 (LIVE, mainnet; supersedes earlier Sui CLI and sponsor notes)
+- Sui CLI 1.82.3 installed (no Windows build of 1.83.1). Move build passes; 3/3 Move tests pass.
+- Anchor package: `0xe8ff894bb09f22b812fca3b5bb940c54bb440973a0ceff59ee39b9e235bf41be`, publish digest `G4fxiTkDE1WeRERAFQD1gXEky7FzgytayteDmoeN5cqB`, 9,068,000 MIST. UpgradeCap `0x46403b855282437edbc1a61905095d8733ad049af9524e26141feb1835ccc1f6` is held by the sponsor wallet, so the package can still be upgraded.
+- Test anchor (`shop_id` phase0-test, now at `day_count` 1, holds a dummy hash): `0x8693a0242bb46a1ec5d0216cee99fdccd977fdf72deec1ba8a9cebced76fef41`; cap `0x7028474559f4fb239a3591edc5099b52e1b8b4c0bb9516640cc901692880f5e4`, held by the sponsor wallet. Real shops need their own anchor.
+- Gas (net MIST): create 3,193,200; sponsored update 419,509, digest `9kKg1n7EUte3bYSLrAajUaok8ZWkZrTRDmDkVSGLx9cn`; plain USDC transfer 1,422,400 (creates a new coin object); sponsored USDC payment 100,132, digest `HyEeWBpyB66yS7iRcawoJ7HzH82w15g6xRtDHPk7wKpm`. Sender and sponsor were different keys on the sponsored transactions. Costs vary with storage created.
+- Tatum read-back after the update matched `previousTransaction`, `last_day`, `head_hash` and `day_count`. Tatum also carried simulate and execute.
+- Sponsored USDC: 0.05 USDC went out and came back; the test sender ended at 0.
+- **Path A not proven.** Download from the Walrus aggregator works without the relayer and the blob parses as Seal. Decrypt is blocked: relayer-written blobs are sealed to committee key server `0x686098f1439237fff9f36b99c7329683c22979d2005c2465cb891acb012a7595` (threshold 1), not the SDK's manual-mode defaults, so `MemWalManual` defaults cannot read them. Key requests go through `https://seal-aggregator-mainnet.mystenlabs.com`, which needs an Enoki-issued key (docs; live call returned "No API key found in request"). No embedding key is needed for this route (read in SDK source; decrypt untested). `scripts/check-path-a.ts` needs `SEAL_API_KEY`. The Enoki portal's Create API Key form offers no Seal option and allows mainnet on paid plans only, and Maris has no budget for a paid plan.
+- **Free route, partly proven.** `scripts/check-open-seal.ts` encrypts locally with the SDK's id layout, then decrypts through a fresh client using the open servers Overclock and Studio Mirai, with the delegate key and **no API key**. Nothing was stored on Walrus.
+  - Both servers, threshold 2: 3 of 3 runs that reached the test passed. 2 more runs failed on Tatum 429s caused by repeated testing.
+  - Alone, first test in a process: Studio Mirai 1/1 passed. Overclock 2/4 passed, with 1 `fetch failed` and 1 `Session key has expired`.
+  - Alone, after another test in the same process: always `Session key has expired`, even with a new session key. Cause unknown; do not treat this as server reliability data.
+  - Relayer-written records stay on the committee server and still need the Enoki key.
+- **Path A over open servers: passed once end to end (5 Nov 2026).** `scripts/check-open-seal-walrus.ts` sealed one demo record with threshold 1 of 2, stored it through `/api/remember/manual` in 25.6s, and got blob `q_q0JELQoWr-e2yCG95MLbM0jbk9QGn5oONcpwSzrMU`. New processes downloaded it from the aggregator and decrypted it with no relayer, through Studio Mirai alone, Overclock alone, and both configured. `listMemories` found it by namespace, status `active`.
+  - No API key, embedding provider or WAL from us. The relayer accepted a 1536-value hash-derived vector in place of an embedding. That tolerance is undocumented and could change.
+  - Do not ship the hash of record text as the vector: on guessable records it could let the relayer confirm a guess. Use a random vector.
+  - Text `recall` will not work for these records. Discovery uses `listMemories`, which needs the relayer. Reading with no relayer needs blob IDs kept elsewhere.
+  - Threshold 1 means either server alone can release the key, and the record is readable while one is up. Threshold 2 requires both, and Overclock was flaky in earlier runs. Design decision pending.
+  - **Not proven:** retention (`end_epoch` and `expires_at` were null earlier), `restore` on these records, behaviour at scale, open-server rate limits and terms.
+
 ## Not done
 | Required check | State |
 |---|---|
-| `check-walrus`, `check-gemini`, `check-rate` | Written; SKIPPED, no credentials |
-| Keyed Tatum run | `check-tatum` passes anonymously; rerun with key |
-| Path A / Path B and end-to-end recovery spike | Not written or run |
-| Anchor publish, `update`, read back, gas cost | Not written or run; Move package not written |
-| Real sponsored USDC payment | Not written or run |
+| Path A, relayer-written records | Blocked on a paid Enoki key |
+| Path A, open servers | Passed for one record; retention, restore and scale not tested |
 | Real recall and restore caps, write latency | Not run |
