@@ -97,10 +97,16 @@ Self-run sponsor key, pending Maris's decision. It needs no extra service, match
   - A second aggregator (`wal-aggregator-mainnet.staketab.org`) also returned HTTP 200 for the first blob, so reads are not tied to one aggregator.
   - `restore` returned `restored: 0, skipped: 1, failed: 0`. The relayer already had the record indexed, so rebuilding an empty index remains unproven.
   - **Not proven:** renewal, `restore` on an empty index, behaviour at scale, open-server rate limits and terms.
+- **Renewal (read-only lookup, 5 Nov 2026).** All 6 Walrus `Blob` objects (4 spike, 2 open-seal) are owned by the account owner wallet `0x6c748590847e40efe229554f0b31ae305c0803fa862498abde66d48de906f526`, not the relayer, the delegate or the sponsor. The open-seal test blob is object `0xc1f85d90daff…`, registered epoch 43, storage to epoch 58 (15 epochs of 14 days).
+  - Only the owner wallet can extend them (`extendBlobTransaction` in `@mysten/walrus` exists, types only). It currently holds no SUI or WAL. Extending was not tried.
+  - Every blob is `deletable: true`, so the owner wallet can also delete records. The hash chain and anchor must catch missing days.
+  - Price at epoch 43 for a 482-byte record (`storageCost`): about 0.0049 WAL per epoch, so a year (26 epochs) adds about 0.128 WAL per record. Storage is charged on encoded size (66,034,000 units for every blob seen), so small records cost the same as larger ones. One blob per day would cost about 47 WAL a year per shop for a year of extra storage, and the bill keeps growing. Rolling days into fewer blobs would cut this sharply. Prices change by epoch.
+  - The relayer paid the first 15 epochs; whether it ever renews is unknown.
 
 ## Not done
 | Required check | State |
 |---|---|
 | Path A, relayer-written records | Blocked on a paid Enoki key |
-| Path A, open servers | Passed for two records; renewal, empty-index restore and scale not tested |
+| Path A, open servers | Passed for two records; empty-index restore and scale not tested |
+| Renewal | Owner wallet owns blobs and must pay WAL; extend not tried, design for batching needed |
 | Real recall and restore caps, write latency | Not run |
