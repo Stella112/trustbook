@@ -1,5 +1,5 @@
-import { addDays, daysBetween } from "./dates.js";
-import type { Debt, DebtState } from "./debts.js";
+import { addDays, daysBetween } from "./dates";
+import type { Debt, DebtState } from "./debts";
 
 export type TrustLabel = "New" | "Good payer" | "Sometimes late" | "Careful";
 

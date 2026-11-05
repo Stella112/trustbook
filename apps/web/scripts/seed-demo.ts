@@ -2,7 +2,7 @@
 // Pass --write to insert into the database. Entries are append-only, so this refuses to run twice.
 import { config } from "dotenv";
 import { computeDebts, effectiveEntries, localDate, monthSummary, trustLabel, addDays } from "@trustbook/ledger";
-import { buildDemoEntries, DEMO_CUSTOMERS, DEMO_ITEMS, DEMO_SHOP, DEMO_SHOP_ID, demoSettings } from "../src/seed/demo.js";
+import { buildDemoEntries, DEMO_CUSTOMERS, DEMO_ITEMS, DEMO_SHOP, DEMO_SHOP_ID, demoSettings } from "../src/seed/demo";
 
 config({ path: "../../.env" });
 const write = process.argv.includes("--write");
@@ -35,7 +35,7 @@ if (!write) {
   process.exit(0);
 }
 
-const { db, closeDb, schema } = await import("../src/db/client.js");
+const { db, closeDb, schema } = await import("../src/db/client");
 const { eq } = await import("drizzle-orm");
 const existing = await db.select({ id: schema.shops.id }).from(schema.shops).where(eq(schema.shops.id, DEMO_SHOP_ID));
 if (existing.length) {

@@ -1,4 +1,4 @@
-import type { Entry, ShopSettings } from "../src/index.js";
+import type { Entry, ShopSettings } from "../src/index";
 
 export const SHOP = "shop1";
 export const settings: ShopSettings = { shopId: SHOP, timezone: "Africa/Lagos", openingCashKobo: 1_000_000, defaultDueDays: 14 };

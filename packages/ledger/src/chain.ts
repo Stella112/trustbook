@@ -1,7 +1,7 @@
 import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
-import { localDate } from "./dates.js";
-import type { Entry } from "./types.js";
+import { localDate } from "./dates";
+import type { Entry } from "./types";
 
 export const GENESIS = "GENESIS";
 

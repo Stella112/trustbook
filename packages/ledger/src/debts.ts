@@ -1,5 +1,5 @@
-import { addDays, byOccurred, localDate } from "./dates.js";
-import type { ReplaceableEntry, ShopSettings } from "./types.js";
+import { addDays, byOccurred, localDate } from "./dates";
+import type { ReplaceableEntry, ShopSettings } from "./types";
 
 export interface Debt {
   saleId: string;

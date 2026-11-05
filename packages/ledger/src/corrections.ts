@@ -1,4 +1,4 @@
-import type { CorrectionEntry, Entry, ReplaceableEntry } from "./types.js";
+import type { CorrectionEntry, Entry, ReplaceableEntry } from "./types";
 
 /**
  * The entries in effect after applying corrections. A correction reverses its target and may add a

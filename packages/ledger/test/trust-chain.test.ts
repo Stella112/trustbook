@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { buildDayRecord, canonicalize, computeDebts, effectiveEntries, entriesRecordedOn, GENESIS, hashRecord, trustLabel, verifyChain, verifyRecord, type DayRecord, type Entry } from "../src/index.js";
-import { correction, payment, promise, sale, settings, SHOP } from "./fixtures.js";
+import { buildDayRecord, canonicalize, computeDebts, effectiveEntries, entriesRecordedOn, GENESIS, hashRecord, trustLabel, verifyChain, verifyRecord, type DayRecord, type Entry } from "../src/index";
+import { correction, payment, promise, sale, settings, SHOP } from "./fixtures";
 
 const label = (entries: Entry[], asOf: string, customerId = "c1") => trustLabel(computeDebts(effectiveEntries(entries), settings, asOf), customerId);
 

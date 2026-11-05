@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { computeDebts, effectiveEntries, lineTotal, type Entry, localDate, monthSummary, mulDivRound, positionAt, proposeAllocations, summarizePeriod, validateEntry } from "../src/index.js";
-import { correction, expense, ownerIn, payment, promise, purchase, sale, settings, stockAdjust } from "./fixtures.js";
+import { computeDebts, effectiveEntries, lineTotal, type Entry, localDate, monthSummary, mulDivRound, positionAt, proposeAllocations, summarizePeriod, validateEntry } from "../src/index";
+import { correction, expense, ownerIn, payment, promise, purchase, sale, settings, stockAdjust } from "./fixtures";
 
 const debtsAt = (entries: Parameters<typeof effectiveEntries>[0], asOf: string) => computeDebts(effectiveEntries(entries), settings, asOf);
 

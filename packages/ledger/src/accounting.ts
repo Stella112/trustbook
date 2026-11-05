@@ -1,7 +1,7 @@
-import { effectiveEntries } from "./corrections.js";
-import { byOccurred, localDate, monthRange } from "./dates.js";
-import { computeDebts } from "./debts.js";
-import { lineTotal, mulDivRound, type Entry, type PurchaseEntry, type ReplaceableEntry, type SaleEntry, type ShopSettings } from "./types.js";
+import { effectiveEntries } from "./corrections";
+import { byOccurred, localDate, monthRange } from "./dates";
+import { computeDebts } from "./debts";
+import { lineTotal, mulDivRound, type Entry, type PurchaseEntry, type ReplaceableEntry, type SaleEntry, type ShopSettings } from "./types";
 
 const milli = (qty: number) => Math.round(qty * 1000);
 

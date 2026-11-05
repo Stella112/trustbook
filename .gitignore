@@ -6,3 +6,5 @@ node_modules/
 dist/
 .spike/
 build/
+*.tsbuildinfo
+next-env.d.ts
