@@ -1,9 +1,14 @@
+// Building an Intl formatter is slow, and ledger views convert every entry's date, so keep one per zone.
+const dateFormats = new Map<string, Intl.DateTimeFormat>();
+
 /** The shop-local calendar date ("YYYY-MM-DD") of an instant, in an IANA timezone. */
 export function localDate(instant: string, timezone: string): string {
   const ms = Date.parse(instant);
   if (Number.isNaN(ms)) throw new Error(`invalid instant: ${instant}`);
+  let f = dateFormats.get(timezone);
   // en-CA formats as YYYY-MM-DD.
-  return new Intl.DateTimeFormat("en-CA", { timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit" }).format(ms);
+  if (!f) dateFormats.set(timezone, (f = new Intl.DateTimeFormat("en-CA", { timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit" })));
+  return f.format(ms);
 }
 
 /** An ISO instant with the timezone's offset for a local date and "HH:MM", e.g. "2026-11-06T10:30:00+01:00". */

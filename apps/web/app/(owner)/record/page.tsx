@@ -2,6 +2,8 @@ import { buildDraft, parseNote, QuotaError, type Draft } from "@trustbook/agent"
 import { instantAt, localTime } from "@trustbook/ledger";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
+import { AdviceLoading, CreditAdvice } from "../../../src/ui/credit-advice";
 import { ulid } from "ulid";
 import { loadBook } from "../../../src/lib/book";
 import { signDraft } from "../../../src/lib/draft";
@@ -40,6 +42,12 @@ export default async function RecordPage({ searchParams }: { searchParams: Promi
     });
   }
 
+  // Recall-backed advice whenever an existing customer is about to take credit (brief §6.11 step 2).
+  const creditSale = draft.entries.find((e) => e.type === "SALE" && e.customerId && e.totalKobo > e.paidNowKobo);
+  const creditTo =
+    creditSale?.type === "SALE" && creditSale.customerId && book.customers.some((c) => c.id === creditSale.customerId)
+      ? { customerId: creditSale.customerId, amountKobo: creditSale.totalKobo - creditSale.paidNowKobo }
+      : null;
   const ready = draft.questions.length === 0 && (draft.entries.length > 0 || draft.newCustomers.length > 0);
   const token = ready ? signDraft({ shopId: book.shop.id, entries: draft.entries, newCustomers: draft.newCustomers, newItems: draft.newItems }) : "";
 
@@ -72,6 +80,11 @@ export default async function RecordPage({ searchParams }: { searchParams: Promi
           </div>
         )}
       </div>
+      {creditTo && (
+        <Suspense fallback={<AdviceLoading />}>
+          <CreditAdvice book={book} customerId={creditTo.customerId} amountKobo={creditTo.amountKobo} />
+        </Suspense>
+      )}
       {ready ? (
         <form action={confirmDraft} className="mt-4 grid grid-cols-2 gap-3">
           <input type="hidden" name="draft" value={token} />

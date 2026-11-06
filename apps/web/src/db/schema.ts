@@ -1,4 +1,4 @@
-import { bigint, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
+import { bigint, boolean, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 import type { Entry } from "@trustbook/ledger";
 
 export const shops = pgTable("shops", {
@@ -43,6 +43,34 @@ export const items = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [uniqueIndex("items_shop_name_idx").on(t.shopId, t.name)],
+);
+
+/**
+ * Every Walrus write goes through this outbox (brief §6.6): pending → submitted → confirmed | failed.
+ * A memory counts only once confirmed with a blob id.
+ */
+export const outbox = pgTable(
+  "outbox",
+  {
+    id: text("id").primaryKey(),
+    shopId: text("shop_id").notNull().references(() => shops.id),
+    namespace: text("namespace").notNull(),
+    kind: text("kind").notNull(),
+    customerId: text("customer_id"),
+    dedupeKey: text("dedupe_key").notNull(),
+    content: text("content").notNull(),
+    occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),
+    demo: boolean("demo").notNull().default(false),
+    status: text("status", { enum: ["pending", "submitted", "confirmed", "failed"] }).notNull().default("pending"),
+    attempts: integer("attempts").notNull().default(0),
+    nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }).notNull().defaultNow(),
+    jobId: text("job_id"),
+    blobId: text("blob_id"),
+    lastError: text("last_error"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    confirmedAt: timestamp("confirmed_at", { withTimezone: true }),
+  },
+  (t) => [uniqueIndex("outbox_shop_dedupe_idx").on(t.shopId, t.dedupeKey), index("outbox_status_idx").on(t.status, t.nextAttemptAt)],
 );
 
 /**

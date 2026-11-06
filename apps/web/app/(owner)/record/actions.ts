@@ -2,9 +2,12 @@
 
 import { validateEntry } from "@trustbook/ledger";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { db, schema } from "../../../src/db/client";
 import { readDraft } from "../../../src/lib/draft";
 import { currentShop } from "../../../src/lib/shop";
+import { queueBrokenPromises, queueMemoriesForSaved } from "../../../src/memory/events";
+import { processOutbox } from "../../../src/memory/outbox";
 
 /** Saves a confirmed card: new customers and items, then the entries, in one transaction. */
 export async function confirmDraft(formData: FormData): Promise<void> {
@@ -37,5 +40,15 @@ export async function confirmDraft(formData: FormData): Promise<void> {
     if (String((err as { code?: string }).code ?? (err as { cause?: { code?: string } }).cause?.code) === "23505") redirect("/?saved=already");
     throw err;
   }
+  // Memories are written after the owner's screen has moved on: a Walrus write takes 20–30 seconds.
+  after(async () => {
+    try {
+      await queueMemoriesForSaved(shop, entries);
+      await queueBrokenPromises(shop);
+      await processOutbox();
+    } catch (err) {
+      console.error("memory outbox:", err instanceof Error ? err.message : err);
+    }
+  });
   redirect("/?saved=1");
 }

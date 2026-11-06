@@ -1,5 +1,7 @@
 import { customerHistory, formatNaira, trustLabel } from "@trustbook/ledger";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
+import { AdviceLoading, CreditAdvice } from "../../../../src/ui/credit-advice";
 import { loadBook } from "../../../../src/lib/book";
 import { EntryLine } from "../../../../src/ui/entry-line";
 import { LabelBadge, Section, shortDate, Stat } from "../../../../src/ui/kit";
@@ -21,13 +23,9 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
       <div className="mt-1">
         <LabelBadge label={trust.label} overridden={trust.overridden} />
       </div>
-      <p className="mt-2 text-stone-700">{trust.evidence}</p>
-      {trust.suggestedLimitKobo !== null && (
-        <p className="mt-1 text-stone-700">
-          Suggested credit limit: <strong>{formatNaira(trust.suggestedLimitKobo)}</strong>
-          <span className="text-sm text-stone-500"> (the middle of what they usually repay in full)</span>
-        </p>
-      )}
+      <Suspense fallback={<AdviceLoading />}>
+        <CreditAdvice book={book} customerId={id} />
+      </Suspense>
 
       <section className="mt-4 grid grid-cols-2 gap-3">
         <Stat label="Owes you" value={formatNaira(balance?.owedKobo ?? 0)} />

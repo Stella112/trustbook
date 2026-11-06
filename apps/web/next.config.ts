@@ -5,7 +5,7 @@ import type { NextConfig } from "next";
 config({ path: "../../.env" });
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["@trustbook/ledger", "@trustbook/agent"],
+  transpilePackages: ["@trustbook/ledger", "@trustbook/agent", "@trustbook/memory", "@trustbook/chain"],
 };
 
 export default nextConfig;
