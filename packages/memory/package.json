@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "@mysten-incubation/memwal": "^0.1.13",
+    "@mysten/seal": "^1.5.3",
+    "@mysten/sui": "^2.39.0",
     "@trustbook/ledger": "workspace:*"
   },
   "devDependencies": {

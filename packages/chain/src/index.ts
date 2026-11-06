@@ -28,6 +28,8 @@ export async function latestCheckpoint(): Promise<Checkpoint> {
 }
 
 export interface AnchorState {
+  /** The shop id the anchor was created for, so recovery can refuse another shop's anchor. */
+  shopId: string;
   lastDay: string;
   headHash: string;
   dayCount: string;
@@ -45,7 +47,8 @@ export async function readAnchor(objectId: string): Promise<AnchorState | null> 
   const j = o?.asMoveObject?.contents?.json;
   if (!j) return null;
   const text = (b64: string) => Buffer.from(b64, "base64").toString("utf8");
-  return { lastDay: text(j.last_day ?? ""), headHash: Buffer.from(j.head_hash ?? "", "base64").toString("hex"), dayCount: String(j.day_count), updatedMs: String(j.updated_ms), lastTxDigest: o?.previousTransaction?.digest ?? null };
+  return { shopId: text(j.shop_id ?? ""), lastDay: text(j.last_day ?? ""), headHash: Buffer.from(j.head_hash ?? "", "base64").toString("hex"), dayCount: String(j.day_count), updatedMs: String(j.updated_ms), lastTxDigest: o?.previousTransaction?.digest ?? null };
 }
 
 export * from "./payments";
+export * from "./anchor";

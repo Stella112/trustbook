@@ -19,6 +19,7 @@
     "@trustbook/chain": "workspace:*",
     "@trustbook/ledger": "workspace:*",
     "@trustbook/memory": "workspace:*",
+    "@trustbook/recovery-core": "workspace:*",
     "drizzle-orm": "^0.45.4",
     "next": "16.4.5",
     "postgres": "^4.1.0",

@@ -16,6 +16,9 @@ export const shops = pgTable("shops", {
   pinHash: text("pin_hash"),
   pinFailures: integer("pin_failures").notNull().default(0),
   pinLockedUntil: timestamp("pin_locked_until", { withTimezone: true }),
+  /** The shop's HeadAnchor on Sui and the AnchorCap held by the server key (brief §6.8a). */
+  anchorObjectId: text("anchor_object_id"),
+  anchorCapId: text("anchor_cap_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -43,6 +46,40 @@ export const items = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [uniqueIndex("items_shop_name_idx").on(t.shopId, t.name)],
+);
+
+/**
+ * What has been sealed to Walrus for Recovery Mode (brief §6.8 "local seals table"): batches of day
+ * records and monthly checkpoints, with their blob ids and the anchor update that followed.
+ */
+export const seals = pgTable(
+  "seals",
+  {
+    id: text("id").primaryKey(),
+    shopId: text("shop_id").notNull().references(() => shops.id),
+    kind: text("kind", { enum: ["batch", "month"] }).notNull(),
+    namespace: text("namespace").notNull(),
+    fromDate: text("from_date").notNull(),
+    toDate: text("to_date").notNull(),
+    dayCount: integer("day_count").notNull(),
+    headHash: text("head_hash").notNull(),
+    blobId: text("blob_id").notNull(),
+    sealedAt: timestamp("sealed_at", { withTimezone: true }).notNull(),
+    anchorTx: text("anchor_tx"),
+  },
+  (t) => [index("seals_shop_idx").on(t.shopId, t.kind, t.toDate)],
+);
+
+/** One row per sealed day: its hash in the chain and the batch that holds it. */
+export const sealedDays = pgTable(
+  "sealed_days",
+  {
+    shopId: text("shop_id").notNull().references(() => shops.id),
+    date: text("date").notNull(),
+    hash: text("hash").notNull(),
+    sealId: text("seal_id").notNull(),
+  },
+  (t) => [uniqueIndex("sealed_days_pk").on(t.shopId, t.date)],
 );
 
 /**
