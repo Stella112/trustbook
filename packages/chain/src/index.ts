@@ -2,6 +2,32 @@ import { SuiGraphQLClient } from "@mysten/sui/graphql";
 
 // The only module in Trustbook that calls Tatum or Sui (brief §3.1). All Sui reads go through Tatum.
 
+// Shared request pacer (brief §4.2: "~2 req/s with retries + backoff"). Tatum's free tier answers
+// bursts with HTTP 429; on Vercel one Walrus read sends about seven Sui reads at once and every
+// one came back 429 (6 Nov). Requests leave at most every MIN_GAP_MS, and a 429 is retried after
+// Retry-After or a growing wait.
+const MIN_GAP_MS = 350;
+const MAX_429_RETRIES = 5;
+let nextSlot = 0;
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+async function waitForSlot() {
+  const now = Date.now();
+  const at = Math.max(now, nextSlot);
+  nextSlot = at + MIN_GAP_MS;
+  if (at > now) await sleep(at - now);
+}
+
+const pacedFetch: typeof fetch = async (input, init) => {
+  for (let attempt = 0; ; attempt++) {
+    await waitForSlot();
+    const res = await fetch(input, init);
+    if (res.status !== 429 || attempt >= MAX_429_RETRIES) return res;
+    const retryAfter = Number(res.headers.get("retry-after"));
+    await sleep(Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 800 * 2 ** attempt);
+  }
+};
+
 let client: SuiGraphQLClient | undefined;
 export function tatum(): SuiGraphQLClient {
   const apiKey = process.env.TATUM_API_KEY;
@@ -10,6 +36,7 @@ export function tatum(): SuiGraphQLClient {
     url: process.env.TATUM_SUI_GRAPHQL_URL || "https://sui-mainnet.gateway.tatum.io/graphql",
     network: "mainnet",
     headers: { "x-api-key": apiKey },
+    fetch: pacedFetch,
   }));
 }
 
