@@ -1,0 +1,22 @@
+{
+  "name": "@trustbook/recovery-tool",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Rebuilds a Trustbook shop's books from Walrus and the Sui anchor, without the app database.",
+  "scripts": {
+    "recover": "tsx src/cli.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@trustbook/chain": "workspace:*",
+    "@trustbook/ledger": "workspace:*",
+    "@trustbook/memory": "workspace:*",
+    "@trustbook/recovery-core": "workspace:*",
+    "dotenv": "^18.0.9"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "tsx": "^4.23.15"
+  }
+}

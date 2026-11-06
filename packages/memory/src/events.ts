@@ -152,3 +152,47 @@ export function parseMemory(text: string): { kind: MemoryKind; customerId?: stri
     return null;
   }
 }
+
+/**
+ * The dedupe key a recovered memory was written under, worked out from its content and the
+ * recovered ledger (memory content does not carry the key). Used when an empty database is filled
+ * from Walrus, so the app never writes the same memory twice. Returns null when it cannot be told;
+ * the importer then uses a key that no event can produce, which is safe for events the app does
+ * not generate again on its own (label changes are only written alongside new entries).
+ */
+export function dedupeKeyFor(text: string, entries: readonly Entry[], settings: ShopSettings, today: string): string | null {
+  let j: { kind?: MemoryKind; customerId?: string; occurredAt?: string; amountKobo?: number; promisedDate?: string; month?: string };
+  try {
+    j = JSON.parse(text);
+  } catch {
+    return null;
+  }
+  const at = j.occurredAt ? Date.parse(j.occurredAt) : NaN;
+  const sameTime = (e: Entry) => Date.parse(e.occurredAt) === at;
+  switch (j.kind) {
+    case "credit": {
+      const e = entries.find((x) => x.type === "SALE" && x.customerId === j.customerId && sameTime(x) && x.totalKobo - x.paidNowKobo === j.amountKobo);
+      return e ? `credit:${e.id}` : null;
+    }
+    case "payment": {
+      const e = entries.find((x) => x.type === "PAYMENT" && x.customerId === j.customerId && sameTime(x) && x.amountKobo === j.amountKobo);
+      return e ? `payment:${e.id}` : null;
+    }
+    case "promise_made": {
+      const e = entries.find((x) => x.type === "PROMISE" && x.customerId === j.customerId && sameTime(x) && x.promisedDate === j.promisedDate);
+      return e ? `promise:${e.id}` : null;
+    }
+    case "promise_broken":
+    case "promise_kept": {
+      const kept = j.kind === "promise_kept";
+      const p = computeDebts(effectiveEntries(entries), settings, today).promises.find((x) => x.customerId === j.customerId && x.promisedDate === j.promisedDate && (kept ? x.kept : !x.kept));
+      return p ? `${kept ? "kept" : "broken"}:${promiseKey(p)}` : null;
+    }
+    case "month_lesson":
+      return j.month ? `lesson:${j.month}` : null;
+    case "label_override":
+      return j.customerId && j.occurredAt ? `override:${j.customerId}:${j.occurredAt}` : null;
+    default:
+      return null;
+  }
+}

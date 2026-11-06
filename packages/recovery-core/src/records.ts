@@ -83,3 +83,43 @@ export function decodeSealed(text: string): Sealed | null {
 export function sealCheckpoint(c: Omit<CheckpointRecord, "hash">): CheckpointRecord {
   return { ...c, hash: hashRecord(c) };
 }
+
+/** Sorts decoded blobs into batches and checkpoints for one shop; anything else is a problem. */
+export function classifyBlobs(shopId: string, blobs: readonly { blobId: string; text: string }[]) {
+  const batches: { record: BatchRecord; blobId: string }[] = [];
+  const checkpoints: { record: CheckpointRecord; blobId: string }[] = [];
+  const problems: string[] = [];
+  for (const b of blobs) {
+    const s = decodeSealed(b.text);
+    if (!s) problems.push(`blob ${b.blobId} is not a Trustbook record`);
+    else if (s.record.shopId !== shopId) problems.push(`blob ${b.blobId} belongs to shop ${s.record.shopId}`);
+    else if (s.kind === "batch") batches.push({ record: s.record, blobId: b.blobId });
+    else checkpoints.push({ record: s.record, blobId: b.blobId });
+  }
+  return { batches, checkpoints, problems };
+}
+
+/** A behaviour memory recovered from Walrus, with its real blob id. */
+export interface RecoveredMemory {
+  namespace: string;
+  blobId: string;
+  text: string;
+}
+
+/**
+ * What the recovery tool writes to `ledger.json`: everything the importer needs to repopulate an
+ * empty database. Day hashes are kept so sealing can continue the same chain after import.
+ */
+export interface RecoveredBooks {
+  v: 1;
+  shopId: string;
+  recoveredAt: string;
+  ok: boolean;
+  anchorId: string | null;
+  shop: ShopSnapshot;
+  directory: BatchRecord["directory"];
+  entries: DayRecord["entries"];
+  days: { date: string; hash: string }[];
+  batches: { blobId: string; namespace: string; from: string; to: string; sealedAt: string; dates: string[] }[];
+  checkpoints: { blobId: string; namespace: string; record: CheckpointRecord }[];
+}

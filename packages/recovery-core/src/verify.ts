@@ -30,6 +30,8 @@ export interface RecoveryInput {
   anchorError?: string;
   /** Behaviour memories found per namespace, or null if not checked. */
   behaviourFound: Record<string, number> | null;
+  /** Blobs that were found but could not be read or recognised: discovery then FAILs. */
+  discoveryProblems?: string[];
 }
 
 export type StepStatus = "PASS" | "FAIL" | "SKIPPED";
@@ -97,9 +99,9 @@ export function verifyRecovery(input: RecoveryInput): RecoveryResult {
   const checkpoints = input.checkpoints.filter((c) => c.record.shopId === input.shopId).sort((a, b) => (a.record.month < b.record.month ? -1 : 1));
   step(
     "Records found",
-    days.length ? "PASS" : "FAIL",
+    days.length && !conflicts.length && !input.discoveryProblems?.length ? "PASS" : "FAIL",
     `${days.length} day records in ${input.batches.length} Walrus blobs, ${checkpoints.length} monthly checkpoint${checkpoints.length === 1 ? "" : "s"}`,
-    [...conflicts, ...input.batches.map((b) => `batch ${b.record.from}..${b.record.to}: blob ${b.blobId}`), ...checkpoints.map((c) => `checkpoint ${c.record.month}: blob ${c.blobId}`)],
+    [...conflicts, ...(input.discoveryProblems ?? []), ...input.batches.map((b) => `batch ${b.record.from}..${b.record.to}: blob ${b.blobId}`), ...checkpoints.map((c) => `checkpoint ${c.record.month}: blob ${c.blobId}`)],
   );
 
   // 2. Anchor read through Tatum

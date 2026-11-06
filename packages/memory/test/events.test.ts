@@ -1,6 +1,6 @@
 import type { Entry } from "@trustbook/ledger";
 import { describe, expect, it } from "vitest";
-import { brokenPromiseEvents, eventsForNewEntries, parseMemory, recallNamespaces } from "../src/events";
+import { brokenPromiseEvents, dedupeKeyFor, eventsForNewEntries, parseMemory, recallNamespaces } from "../src/events";
 
 const settings = { shopId: "s1", timezone: "Africa/Lagos", openingCashKobo: 0, defaultDueDays: 14 };
 const ctx = { shopId: "s1", settings, today: "2026-11-06", demo: false, customerName: (id: string) => ({ c1: "Tunde" })[id] ?? id };
@@ -51,5 +51,31 @@ describe("behaviour memory events", () => {
   });
   it("recalls from this month and the two before", () => {
     expect(recallNamespaces("s1", "2026-01-15")).toEqual(["trustbook:s1:behaviour:2026-01", "trustbook:s1:behaviour:2025-12", "trustbook:s1:behaviour:2025-11"]);
+  });
+});
+
+describe("dedupe keys of recovered memories", () => {
+  it("gives every recoverable memory the key it was written under", () => {
+    const s = sale("s", "2026-11-01", "2026-11-03");
+    const promise: Entry = { ...base("pr", "2026-11-03"), type: "PROMISE", customerId: "c1", saleId: "s", promisedDate: "2026-11-05" };
+    const late = sale("s2", "2026-10-20", "2026-10-25");
+    // The first payment clears the older debt (oldest first); the second keeps the promise.
+    const unpaid: Entry = { ...sale("s3", "2026-10-28", "2026-10-30"), customerId: "c2" };
+    const unpaidPromise: Entry = { ...base("pr3", "2026-10-29"), type: "PROMISE", customerId: "c2", saleId: "s3", promisedDate: "2026-10-31" };
+    const entries = [late, unpaid, unpaidPromise, s, promise, pay("p0", "2026-11-04"), pay("p", "2026-11-05")];
+    const written = [
+      ...eventsForNewEntries([], [late], ctx),
+      ...eventsForNewEntries([late], [s], ctx),
+      ...eventsForNewEntries([late, s], [promise], ctx),
+      ...eventsForNewEntries([late, s, promise], [pay("p0", "2026-11-04")], ctx),
+      ...eventsForNewEntries([late, s, promise, pay("p0", "2026-11-04")], [pay("p", "2026-11-05")], ctx),
+      ...brokenPromiseEvents(entries, ctx),
+    ].filter((e) => e.kind !== "label_change");
+    expect(written.map((e) => e.kind).sort()).toEqual(["credit", "credit", "payment", "payment", "promise_broken", "promise_kept", "promise_made"].sort());
+    for (const e of written) expect(dedupeKeyFor(e.content, entries, settings, ctx.today)).toBe(e.dedupeKey);
+  });
+  it("returns null for a memory it cannot place", () => {
+    expect(dedupeKeyFor('{"v":1,"kind":"payment","customerId":"c1","occurredAt":"2026-01-01T00:00:00Z","amountKobo":1}', [], settings, ctx.today)).toBeNull();
+    expect(dedupeKeyFor("not json", [], settings, ctx.today)).toBeNull();
   });
 });

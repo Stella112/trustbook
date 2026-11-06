@@ -49,6 +49,20 @@ export async function recallMemories(query: string, namespaces: string[], limit 
   return results.flat().sort((a, b) => a.distance - b.distance);
 }
 
+/**
+ * Rebuilds the relayer's index for one namespace from Walrus (brief §6.8a step 8) and returns how
+ * many of its blobs are now readable. One call inspects at most 100 blobs (docs/VERIFIED.md); a
+ * namespace is kept under that by design (brief §6.8b), so a truncated result is retried briefly.
+ */
+export async function restoreNamespace(namespace: string): Promise<{ found: number; failed: number; total: number; truncated: boolean }> {
+  let last = { found: 0, failed: 0, total: 0, truncated: true };
+  for (let attempt = 0; attempt < 3 && last.truncated; attempt++) {
+    const r = await memwal().restore(namespace, 100);
+    last = { found: r.restored + r.skipped, failed: r.failed, total: r.total, truncated: r.truncated };
+  }
+  return last;
+}
+
 export async function relayerHealth(): Promise<{ ok: boolean; detail: string }> {
   try {
     const h = await memwal().health();
