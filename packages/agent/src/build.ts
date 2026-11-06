@@ -67,6 +67,16 @@ export function matchName(written: string, known: Known[]): { match?: Known; can
   });
   if (partial.length === 1) return { match: partial[0], candidates: partial };
   if (partial.length > 1) return { candidates: partial };
+  // Word overlap, ignoring plurals and word order: "crates egg" matches "Eggs (crate)".
+  const words = (s: string) => new Set(norm(s).split(" ").filter((x) => x.length >= 3).map((x) => x.replace(/(es|s)$/, "")));
+  const mine = words(written);
+  const scored = known
+    .map((k) => ({ k, hits: [...words(k.name)].filter((x) => mine.has(x)).length }))
+    .filter((x) => x.hits > 0);
+  const best = Math.max(0, ...scored.map((x) => x.hits));
+  const top = scored.filter((x) => x.hits === best).map((x) => x.k);
+  if (top.length === 1) return { match: top[0], candidates: top };
+  if (top.length > 1) return { candidates: top };
   const close = known.filter((k) => w.length >= 4 && editDistance(norm(k.name), w) <= (w.length >= 7 ? 2 : 1));
   return close.length === 1 ? { match: close[0], candidates: close } : { candidates: close };
 }

@@ -68,5 +68,7 @@ export const proposalJsonSchema = {
     question: { type: "string", description: "For ask_question: the question" },
     clarifications: { type: "array", items: { type: "string" }, description: "Questions to ask the owner about anything unclear" },
   },
-  required: ["kind", "clarifications"],
+  // items is required (empty for actions without items) because the model otherwise sometimes
+  // drops it on purchases, seen live on 6 Nov.
+  required: ["kind", "items", "clarifications"],
 } as const;
