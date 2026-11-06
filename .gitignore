@@ -8,3 +8,7 @@ dist/
 build/
 *.tsbuildinfo
 next-env.d.ts
+
+# Recovery tool output: decrypted books, never commit
+tools/recovery/recovered/
+recovered/
