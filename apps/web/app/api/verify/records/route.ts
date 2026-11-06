@@ -3,7 +3,7 @@ import { z } from "zod";
 import { verifyRecords } from "../../../../src/recovery/verify-source";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 const Query = z.object({ shop: z.string().min(1).max(64).regex(/^[a-z0-9-]+$/) });
 

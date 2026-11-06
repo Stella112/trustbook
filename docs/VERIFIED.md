@@ -120,3 +120,8 @@ Self-run sponsor key, pending Maris's decision. It needs no extra service, match
 - **`recall(query, { limit: 100, namespace })`** returned every memory in each namespace (28 and 19, 47 unique blob ids), with text. The recovery tool uses this to export memories for the importer.
 - **Free Postgres for the rehearsal.** The Supabase `postgres` role has `CREATEDB`; `create database trustbook_rehearsal` worked and the transaction pooler connects to it by changing the database name in the URL. The rehearsal never touches the real database.
 - **Links used on /verify:** `https://suiscan.xyz/mainnet/object/<id>` and `https://aggregator.walrus-mainnet.walrus.space/v1/blobs/<id>` both returned HTTP 200.
+
+## Phase 6 — End-of-day save (6 Nov 2026)
+- **Vercel Cron on Hobby** (docs, `vercel.com/docs/cron-jobs/usage-and-pricing`, updated 2026-07-15): up to 100 cron jobs per project, each at most **once per day**, fired anywhere within the scheduled hour (±59 min). More frequent expressions fail at deploy. Cron Jobs are marked legacy in favour of "Schedules".
+- **Function duration on Hobby** (docs, `…/configuring-functions/duration`, updated 2026-08-24): with fluid compute (on by default) the default and maximum are **300 s**, not 60 s. `/api/seal` and the `/verify` routes now set `maxDuration = 300`.
+- `/api/seal` tested by calling the handler directly: wrong secret → 401; normal run → no-op (5 Nov already sealed, 6 Nov still open), 10 s; with the shop's advisory lock held by another transaction → `skipped: another seal run holds the lock`. A real one-day seal through the cron has not run yet; the same `sealShop` code sealed 8 batches on mainnet earlier today.

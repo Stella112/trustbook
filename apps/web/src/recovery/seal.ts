@@ -17,8 +17,11 @@ const weekStart = (date: string) => addDays(date, -((new Date(`${date}T12:00:00Z
  * shop's Sui anchor is updated, so the anchor never points past what is stored. Then each fully
  * sealed month without a checkpoint gets one. `through` defaults to yesterday: today is still open.
  */
-export async function sealShop(shopId: string, opts: { through?: string; log?: Log } = {}) {
+export async function sealShop(shopId: string, opts: { through?: string; log?: Log; deadline?: number } = {}) {
   const log = opts.log ?? (() => {});
+  // A Walrus write plus an anchor update takes about 40 s; never start one that cannot finish in time.
+  const timeLeft = () => opts.deadline === undefined || Date.now() < opts.deadline - 60_000;
+  let stoppedEarly = false;
   const [shop] = await db.select().from(schema.shops).where(eq(schema.shops.id, shopId));
   if (!shop) throw new Error(`no shop ${shopId}`);
   const today = localDate(new Date().toISOString(), shop.timezone);
@@ -69,6 +72,12 @@ export async function sealShop(shopId: string, opts: { through?: string; log?: L
   const sealedBatches: { from: string; to: string; blobId: string; anchorTx: string }[] = [];
 
   for (const dates of groups.values()) {
+    if (!timeLeft()) {
+      // Days are sealed oldest first, so stopping here leaves the chain whole; the next run continues.
+      stoppedEarly = true;
+      log(`stopping before ${dates[0]}: out of time, the next run continues`);
+      break;
+    }
     const sealedAt = new Date().toISOString();
     const days: DayRecord[] = [];
     for (const date of dates) {
@@ -106,7 +115,12 @@ export async function sealShop(shopId: string, opts: { through?: string; log?: L
     .where(and(eq(schema.outbox.shopId, shop.id), eq(schema.outbox.status, "confirmed")))
     .groupBy(schema.outbox.namespace);
   const behaviourCounts = Object.fromEntries(counts.map((c) => [c.namespace, c.n]));
+  const sealedMonths: string[] = [];
   for (const month of months) {
+    if (stoppedEarly || !timeLeft()) {
+      stoppedEarly = true;
+      break;
+    }
     const sealedAt = new Date().toISOString();
     const inChain = allSealed.filter((d) => d.date <= monthRange(month).to);
     const { totals, balances } = totalsAt(entries, settings, month, sealedAt);
@@ -116,6 +130,21 @@ export async function sealShop(shopId: string, opts: { through?: string; log?: L
     const blobId = await writeSealed(encodeSealed(monthHeader(shop.id, month), record), namespace, tatum());
     await db.insert(schema.seals).values({ id: ulid(), shopId: shop.id, kind: "month", namespace, fromDate: monthRange(month).from, toDate: monthRange(month).to, dayCount: inChain.length, headHash: record.hash, blobId, sealedAt: new Date(sealedAt) });
     log(`  blob ${blobId}`);
+    sealedMonths.push(month);
   }
-  return { anchorId, batches: sealedBatches, checkpoints: months, dayCount };
+  return { anchorId, batches: sealedBatches, checkpoints: sealedMonths, dayCount, stoppedEarly };
+}
+
+/**
+ * Seals a shop unless another run is already sealing it. Two runs at once could write the same day
+ * twice with different seal times, which recovery would rightly report as a conflict. The lock is a
+ * Postgres transaction-level advisory lock, held for the whole run and released when it ends, so no
+ * new table is needed and a crashed run never leaves a stale lock behind.
+ */
+export async function sealShopExclusive(shopId: string, opts: Parameters<typeof sealShop>[1] = {}) {
+  return db.transaction(async (tx) => {
+    const [row] = await tx.execute<{ locked: boolean }>(sql`select pg_try_advisory_xact_lock(hashtext(${`trustbook-seal:${shopId}`})) as locked`);
+    if (!row?.locked) return { skipped: true as const, reason: "another seal run holds the lock" };
+    return { skipped: false as const, ...(await sealShop(shopId, opts)) };
+  });
 }

@@ -1,6 +1,6 @@
 # Gate 5 report — Provable Recovery (6 Nov 2026)
 
-## Verdict: approved by Maris on 6 Nov 2026 (decision 1 accepted as written; decision 2 still open)
+## Verdict: approved by Maris on 6 Nov 2026 (decision 1 accepted as written; decision 2: daily end-of-day save chosen and built in Phase 6)
 The demo shop's books are sealed to Walrus mainnet and anchored on Sui. The standalone recovery tool rebuilds them with no access to the app database and passes every step. A full wipe rehearsal gives identical advice, numbers and cited memories before and after. `/verify` runs the same proof in the browser, and each of the four tamper options fails the step it should. `pnpm test` passes 105 of 105.
 
 ## Real recovery report (`tools/recovery`, run 2026-11-06 12:29 UTC)
