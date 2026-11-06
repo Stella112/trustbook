@@ -12,6 +12,10 @@ export const shops = pgTable("shops", {
   defaultDueDays: integer("default_due_days").notNull().default(14),
   /** DEMO shops are seeded and must be labelled as demo data everywhere. */
   mode: text("mode", { enum: ["DEMO", "LIVE"] }).notNull(),
+  /** scrypt hash of the owner's 6-digit PIN; null for the demo shop, which opens without one. */
+  pinHash: text("pin_hash"),
+  pinFailures: integer("pin_failures").notNull().default(0),
+  pinLockedUntil: timestamp("pin_locked_until", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

@@ -2,7 +2,9 @@ import { formatNaira, localDate, monthSummary, validateEntry } from "@trustbook/
 import { asc, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db, schema } from "../src/db/client";
+import { shopCodeOf } from "../src/lib/auth";
 import { currentShop } from "../src/lib/shop";
+import { signOut } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +44,16 @@ export default async function Home() {
       <p className="mt-6 text-sm text-stone-600">
         {entries.length} entries in the book{lastEntry ? `, latest on ${localDate(lastEntry.occurredAt, shop.timezone)}` : ""}. Month to {today}.
       </p>
+      {shop.mode === "LIVE" && (
+        <p className="mt-2 text-sm text-stone-600">
+          Your shop code: <span className="font-mono font-semibold">{shopCodeOf(shop.id)}</span>. Keep it with your PIN to open your book on another phone.
+        </p>
+      )}
+      <form action={signOut} className="mt-6">
+        <button type="submit" className="text-sm text-stone-600 underline">
+          Sign out
+        </button>
+      </form>
     </main>
   );
 }

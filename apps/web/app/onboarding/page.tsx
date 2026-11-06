@@ -10,6 +10,12 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
       <div className="mt-6">
         <OnboardingForm />
       </div>
+      <p className="mt-6 text-center">
+        Already have a shop?{" "}
+        <a href="/login" className="font-semibold text-emerald-800 underline">
+          Sign in with your PIN
+        </a>
+      </p>
       <form action={openDemoShop} className="mt-8 border-t border-stone-200 pt-6">
         <p className="text-stone-700">Just looking? Open a sample shop filled with demo data.</p>
         <button type="submit" className="mt-3 w-full rounded-xl border border-stone-400 px-4 py-3 text-lg font-medium">

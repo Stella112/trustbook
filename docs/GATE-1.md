@@ -85,3 +85,12 @@ Proposed cuts, all reversible later:
 - **All P1 items** (any-token swap, zkLogin, voice, QR, expiry display, CSV) cut.
 
 Nothing in the demo script (Section 6.11) is cut.
+
+## Approved 6 Nov
+Maris approved Gate 1, all six recommendations and the proposed cuts. Applied:
+- Hard warning signs mark even a new customer Careful.
+- Sui payments count in a "Sui wallet" total, not cash on hand.
+- New `SUPPLIER_PAYMENT` entry pays down supplier balances.
+- Held customer credit is used against the next credit sale.
+- Owner PIN: 6 digits, stored as a scrypt hash, sign-in by 8-character shop code, locked for 15 minutes after 5 wrong tries. The demo shop opens without a PIN. Tested in the browser.
+- Broken promises count only explicit `PROMISE` entries (unchanged).

@@ -7,46 +7,56 @@ import { redirect } from "next/navigation";
 import { ulid } from "ulid";
 import { z } from "zod";
 import { db, schema } from "../../src/db/client";
+import { hashPin, PIN_PATTERN } from "../../src/lib/auth";
+import { startSession } from "../../src/lib/shop";
 import { DEMO_SHOP_ID } from "../../src/seed/demo";
-import { rememberShop } from "../../src/lib/shop";
 
+type Field = "shopName" | "ownerName" | "currency" | "openingCash" | "suiAddress" | "pin" | "pinConfirm" | "form";
 export interface OnboardingState {
-  errors: Partial<Record<"shopName" | "ownerName" | "currency" | "openingCash" | "suiAddress" | "form", string>>;
+  errors: Partial<Record<Field, string>>;
   values?: Record<string, string>;
 }
 
-const Form = z.object({
-  shopName: z.string().trim().min(2, "Enter your shop's name").max(80, "Keep the name under 80 letters"),
-  ownerName: z.string().trim().min(1, "Enter your name").max(80, "Keep the name under 80 letters"),
-  currency: z.literal("NGN", { error: "Only naira (NGN) is supported for now" }),
-  openingCash: z.string().trim().transform((s, ctx) => {
-    const kobo = parseNairaToKobo(s === "" ? "0" : s);
-    if (kobo === null) {
-      ctx.addIssue({ code: "custom", message: "Write the amount like 150,000 or 150k" });
-      return z.NEVER;
-    }
-    return kobo;
-  }),
-  suiAddress: z.string().trim().transform((s, ctx) => {
-    if (s === "") return null;
-    if (!/^0x[0-9a-fA-F]{64}$/.test(s) || !isValidSuiAddress(s)) {
-      ctx.addIssue({ code: "custom", message: "A Sui address starts with 0x and has 64 letters and numbers after it" });
-      return z.NEVER;
-    }
-    return normalizeSuiAddress(s);
-  }),
-});
+const Form = z
+  .object({
+    shopName: z.string().trim().min(2, "Enter your shop's name").max(80, "Keep the name under 80 letters"),
+    ownerName: z.string().trim().min(1, "Enter your name").max(80, "Keep the name under 80 letters"),
+    currency: z.literal("NGN", { error: "Only naira (NGN) is supported for now" }),
+    openingCash: z.string().trim().transform((s, ctx) => {
+      const kobo = parseNairaToKobo(s === "" ? "0" : s);
+      if (kobo === null) {
+        ctx.addIssue({ code: "custom", message: "Write the amount like 150,000 or 150k" });
+        return z.NEVER;
+      }
+      return kobo;
+    }),
+    suiAddress: z.string().trim().transform((s, ctx) => {
+      if (s === "") return null;
+      if (!/^0x[0-9a-fA-F]{64}$/.test(s) || !isValidSuiAddress(s)) {
+        ctx.addIssue({ code: "custom", message: "A Sui address starts with 0x and has 64 letters and numbers after it" });
+        return z.NEVER;
+      }
+      return normalizeSuiAddress(s);
+    }),
+    pin: z.string().regex(PIN_PATTERN, "Choose a PIN of exactly 6 numbers"),
+    pinConfirm: z.string(),
+  })
+  .refine((f) => f.pin === f.pinConfirm, { path: ["pinConfirm"], message: "The two PINs do not match" });
+
+const FIELDS = ["shopName", "ownerName", "currency", "openingCash", "suiAddress", "pin", "pinConfirm"] as const;
 
 export async function createShop(_prev: OnboardingState, formData: FormData): Promise<OnboardingState> {
-  const raw = Object.fromEntries(["shopName", "ownerName", "currency", "openingCash", "suiAddress"].map((k) => [k, String(formData.get(k) ?? "")]));
+  const raw = Object.fromEntries(FIELDS.map((k) => [k, String(formData.get(k) ?? "")]));
   const parsed = Form.safeParse(raw);
   if (!parsed.success) {
     const errors: OnboardingState["errors"] = {};
     for (const issue of parsed.error.issues) {
-      const key = String(issue.path[0] ?? "form") as keyof OnboardingState["errors"];
+      const key = String(issue.path[0] ?? "form") as Field;
       errors[key] ??= issue.message;
     }
-    return { errors, values: raw };
+    // Never send PINs back to the browser.
+    const { pin: _p, pinConfirm: _c, ...values } = raw;
+    return { errors, values };
   }
   const id = ulid();
   await db.insert(schema.shops).values({
@@ -58,14 +68,16 @@ export async function createShop(_prev: OnboardingState, formData: FormData): Pr
     openingCashKobo: parsed.data.openingCash,
     suiAddress: parsed.data.suiAddress,
     mode: "LIVE",
+    pinHash: hashPin(parsed.data.pin),
   });
-  await rememberShop(id);
+  await startSession(id);
   redirect("/");
 }
 
+/** The demo shop holds only demo data, so it opens without a PIN. */
 export async function openDemoShop(): Promise<void> {
   const [demo] = await db.select({ id: schema.shops.id }).from(schema.shops).where(eq(schema.shops.id, DEMO_SHOP_ID));
   if (!demo) redirect("/onboarding?demo=missing");
-  await rememberShop(DEMO_SHOP_ID);
+  await startSession(DEMO_SHOP_ID);
   redirect("/");
 }

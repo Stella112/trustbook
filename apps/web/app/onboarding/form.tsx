@@ -35,6 +35,8 @@ export function OnboardingForm() {
         error={state.errors.suiAddress}
         hint="Where customers' Sui payments go. You can add it later."
       />
+      <Field name="pin" label="Choose a 6-number PIN" type="password" inputMode="numeric" error={state.errors.pin} hint="You will use it to open your book on another phone." />
+      <Field name="pinConfirm" label="Type the PIN again" type="password" inputMode="numeric" error={state.errors.pinConfirm} />
       {state.errors.form && <p className="text-red-700">{state.errors.form}</p>}
       <button type="submit" disabled={pending} className="w-full rounded-xl bg-emerald-700 px-4 py-4 text-lg font-semibold text-white disabled:opacity-60">
         {pending ? "Setting up…" : "Start my book"}
@@ -43,12 +45,15 @@ export function OnboardingForm() {
   );
 }
 
-function Field(props: { name: string; label: string; placeholder?: string; defaultValue?: string; error?: string; hint?: string; inputMode?: "decimal" }) {
+export function Field(props: { name: string; label: string; placeholder?: string; defaultValue?: string; error?: string; hint?: string; inputMode?: "decimal" | "numeric"; type?: "text" | "password" }) {
   return (
     <label className="block">
       <span className="text-base font-medium">{props.label}</span>
       <input
         name={props.name}
+        type={props.type ?? "text"}
+        maxLength={props.type === "password" ? 6 : undefined}
+        autoComplete={props.type === "password" ? "off" : undefined}
         placeholder={props.placeholder}
         defaultValue={props.defaultValue}
         inputMode={props.inputMode}
