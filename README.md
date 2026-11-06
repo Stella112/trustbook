@@ -6,9 +6,9 @@ Trustbook is an AI bookkeeper for small shops, built first for Nigerian market t
 
 Built for **Total Recall — Tatum × Walrus Memory Hackathon**, Track 03 (Consumer Finance Apps).
 
-- **Live app:** _add the Vercel address after deploy_
+- **Live app:** https://trustbook-app.vercel.app (demo shop: `/onboarding` → Open the demo shop)
 - **Code:** https://github.com/Stella112/trustbook
-- **Judges, start here:** `/verify` proves the books in your browser; `/proof` shows live Walrus and Tatum evidence.
+- **Judges, start here:** [/verify](https://trustbook-app.vercel.app/verify) proves the books in your browser; [/proof](https://trustbook-app.vercel.app/proof) shows live Walrus and Tatum evidence.
 - **Demo shop:** "Mama Ngozi Provisions", about six weeks of realistic sample data, labelled **Demo data** everywhere.
 
 ## What it does

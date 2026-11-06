@@ -40,7 +40,7 @@ Found and fixed along the way: the swap router dropped the "sponsor pays gas" se
 | Project | Trustbook |
 | Track | 03 — Consumer Finance Apps (also Best Walrus Memory) |
 | Public repo | https://github.com/Stella112/trustbook |
-| Live demo | _Vercel address after deploy_ |
+| Live demo | https://trustbook-app.vercel.app |
 | Blog post | `docs/BLOG.md`, to publish (Medium, Mirror, dev.to or similar) |
 | `MEMWAL_AGENT_ID` (delegate public key) | `c0ab165c5abecc7e015971cd3428c8b12c613593998a4ed2a06edc98267d7c0f` (checked: it matches the key the app writes with) |
 | Tatum dashboard account ID | Maris to copy from dashboard.tatum.io (not stored in the project) |

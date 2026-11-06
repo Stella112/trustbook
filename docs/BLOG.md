@@ -59,4 +59,4 @@ All Sui traffic goes through Tatum's Sui GraphQL gateway. Tatum is how Trustbook
 
 The hosted relayer sees memory text in plain form while it embeds it, so only demo data is stored for now; client-side encryption is the next step. Walrus storage expires (the demo's records are safe until June 2027), and renewing it needs the owner's wallet. Today's entries are sealed tonight, not instantly. Trust labels are explainable rules for one shop, not a credit score. Sign in with Google is left out because zkLogin on mainnet needs a paid plan.
 
-Trustbook is open source: https://github.com/Stella112/trustbook. Try the demo shop: _add live link_.
+Trustbook is open source: https://github.com/Stella112/trustbook. Try the demo shop at https://trustbook-app.vercel.app (open `/onboarding` and choose "Open the demo shop"), or check the books yourself at https://trustbook-app.vercel.app/verify.
