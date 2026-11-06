@@ -172,7 +172,8 @@ export async function listAllNamespaces(): Promise<{ name: string; count: number
   const out: { name: string; count: number }[] = [];
   let cursor: string | undefined;
   for (;;) {
-    const page = await m.listNamespaces(cursor ? { cursor } : {});
+    // The hosted relayer sometimes times out (seen 6 Nov: 504 on its preflight); retry before failing.
+    const page = await withRetry(() => m.listNamespaces(cursor ? { cursor } : {}));
     out.push(...page.namespaces.map((n) => ({ name: n.name, count: n.memory_count })));
     if (!page.has_more || !page.next_cursor) break;
     cursor = page.next_cursor;
@@ -223,7 +224,7 @@ export async function listBlobIds(namespace: string): Promise<string[]> {
   const ids: string[] = [];
   let cursor: string | undefined;
   for (;;) {
-    const page = await m.listMemories({ namespace, ...(cursor ? { cursor } : {}) });
+    const page = await withRetry(() => m.listMemories({ namespace, ...(cursor ? { cursor } : {}) }));
     ids.push(...page.memories.filter((x) => x.status === "active").map((x) => x.blob_id));
     if (!page.has_more || !page.next_cursor) break;
     cursor = page.next_cursor;

@@ -110,3 +110,13 @@ Self-run sponsor key, pending Maris's decision. It needs no extra service, match
 | Path A, open servers | Passed for two records; empty-index restore and scale not tested |
 | Renewal | Owner wallet owns blobs and must pay WAL; extend not tried, design for batching needed |
 | Real recall and restore caps, write latency | Not run |
+
+## Phase 5 — Provable Recovery (6 Nov 2026, all live on mainnet)
+- **Sealing.** `apps/web/scripts/seal-shop.ts` sealed the demo shop: 42 day records (25 Sep – 5 Nov) in 9 weekly blobs plus 2 month checkpoints, written through the open Seal servers (threshold 1 of 2) and `/api/remember/manual`. 8 batches took 306 s in total. Shop anchor `0x1f93f1635a8b000045f4ce3ea16369022fb58320f793c7702ef022ca4a2134e9`, created by the server key, updated after each confirmed batch; last update tx `98tq4P7h1C7MmvisEdf2PS6RbLC66VCujPe2kQyThNd7` (42 days, last day 2026-11-05).
+- **Seal: one key request for many records.** `SealClient.fetchKeys({ ids: [...] })` with one PTB holding one `seal_approve` call per id, then `decrypt` per blob, read all 11 blobs with one session key. The SDK's own docs recommend this (`client.d.mts`). Reading blobs one by one with three in parallel hit a Tatum 429 on `/verify`; the batch read did not.
+- **AnchorCap lookup through Tatum GraphQL.** `address(address:) { objects(filter: { type: "<pkg>::anchor::AnchorCap" }) { pageInfo { hasNextPage endCursor } nodes { address contents { json } } } }` returns each cap with `json.anchor_id`. Checked against the Phase 0 anchor: found the same cap id as `.env`.
+- **`HeadAnchor.shop_id`** reads back through `contents.json.shop_id` (base64), so recovery refuses an anchor that belongs to another shop.
+- **`restore(namespace, 100)`** on the two behaviour namespaces reported 28 and 19 memories (`restored + skipped`); the relayer already had them indexed. Rebuilding a *wiped relayer index* is still unproven: we cannot wipe the hosted relayer's index.
+- **`recall(query, { limit: 100, namespace })`** returned every memory in each namespace (28 and 19, 47 unique blob ids), with text. The recovery tool uses this to export memories for the importer.
+- **Free Postgres for the rehearsal.** The Supabase `postgres` role has `CREATEDB`; `create database trustbook_rehearsal` worked and the transaction pooler connects to it by changing the database name in the URL. The rehearsal never touches the real database.
+- **Links used on /verify:** `https://suiscan.xyz/mainnet/object/<id>` and `https://aggregator.walrus-mainnet.walrus.space/v1/blobs/<id>` both returned HTTP 200.

@@ -52,7 +52,14 @@ console.log(`Trustbook recovery for ${shopId} — app database: not used`);
 // 1. Discovery and reading, straight from Walrus.
 console.log("Reading sealed records from Walrus…");
 const blobIds = args.blobs ? readFileSync(resolve(args.blobs), "utf8").split(/\s+/).filter(Boolean) : undefined;
-const loaded = await loadSealedBlobs(shopId, tatum(), { blobIds, log });
+let loaded: Awaited<ReturnType<typeof loadSealedBlobs>>;
+try {
+  loaded = await loadSealedBlobs(shopId, tatum(), { blobIds, log });
+} catch (err) {
+  // Discovery asks the relayer which blobs exist. If it is down, say so plainly; reading itself does not need it.
+  const why = err instanceof Error ? err.message : String(err);
+  loaded = { blobs: [], problems: [`could not list the shop's records through the Walrus Memory relayer (${why.slice(0, 160)}). Retry later, or pass --blobs <file> with the blob IDs shown on /proof.`] };
+}
 const { batches, checkpoints, problems } = classifyBlobs(shopId, loaded.blobs);
 const discoveryProblems = [...loaded.problems, ...problems];
 
