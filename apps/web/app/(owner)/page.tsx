@@ -5,7 +5,8 @@ import { EntryLine } from "../../src/ui/entry-line";
 import { Section, shortDate, Stat } from "../../src/ui/kit";
 
 /** Today: what came in, what went out on credit, and who promised to pay today. */
-export default async function TodayPage() {
+export default async function TodayPage({ searchParams }: { searchParams: Promise<{ saved?: string }> }) {
+  const { saved } = await searchParams;
   const book = await loadBook();
   const { entries, settings, today, debts } = book;
   const day = daySummary(entries, settings, today);
@@ -14,6 +15,11 @@ export default async function TodayPage() {
 
   return (
     <>
+      {saved && (
+        <p role="status" className="mt-2 rounded-lg bg-emerald-100 px-3 py-2 font-semibold text-emerald-900">
+          {saved === "already" ? "That was already saved." : "Saved to your book."}
+        </p>
+      )}
       <h1 className="mt-1 text-3xl font-bold">Today</h1>
       <p className="text-stone-600">{shortDate(today)}</p>
 

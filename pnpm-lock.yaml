@@ -57,6 +57,9 @@ importers:
       '@mysten/sui':
         specifier: ^2.39.0
         version: 2.39.0(typescript@7.0.2)
+      '@trustbook/agent':
+        specifier: workspace:*
+        version: link:../../packages/agent
       '@trustbook/ledger':
         specifier: workspace:*
         version: link:../../packages/ledger
