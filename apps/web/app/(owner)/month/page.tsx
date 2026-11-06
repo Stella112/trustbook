@@ -1,6 +1,12 @@
 import { addDays, creditGiven, dayList, formatNaira, monthRange, monthSummary } from "@trustbook/ledger";
+import { and, eq } from "drizzle-orm";
 import Link from "next/link";
+import { after } from "next/server";
+import { db, schema } from "../../../src/db/client";
 import { shopCodeOf } from "../../../src/lib/auth";
+import { buildMonthLesson } from "../../../src/memory/lesson";
+import { enqueue, processOutbox } from "../../../src/memory/outbox";
+import { closeMonth } from "./actions";
 import { loadBook } from "../../../src/lib/book";
 import { Section, shortDate, Stat } from "../../../src/ui/kit";
 import { signOut } from "../actions";
@@ -20,6 +26,21 @@ export default async function MonthPage({ searchParams }: { searchParams: Promis
   const next = addDays(to, 1).slice(0, 7);
   const label = new Date(`${from}T12:00:00Z`).toLocaleDateString("en-NG", { month: "long", year: "numeric", timeZone: "UTC" });
 
+  // A month is closed once its lesson memory is queued. Opening a new month closes the last one
+  // automatically (brief §6.7); the dedupe key keeps it to one lesson per month.
+  const lessonFor = async (mm: string) =>
+    (await db.select({ status: schema.outbox.status, blobId: schema.outbox.blobId }).from(schema.outbox).where(and(eq(schema.outbox.shopId, shop.id), eq(schema.outbox.dedupeKey, `lesson:${mm}`))))[0];
+  const lastMonth = addDays(monthRange(today.slice(0, 7)).from, -1).slice(0, 7);
+  const hasHistory = entries.some((e) => e.occurredAt.slice(0, 7) <= lastMonth);
+  if (hasHistory && !(await lessonFor(lastMonth))) {
+    const { event } = buildMonthLesson(entries, settings, lastMonth, shop.mode === "DEMO", book.customerName);
+    await enqueue(shop.id, shop.mode === "DEMO", [event]);
+    after(() => processOutbox().catch((err) => console.error("memory outbox:", err)));
+  }
+  const isPast = month < today.slice(0, 7);
+  const lesson = isPast ? buildMonthLesson(entries, settings, month, shop.mode === "DEMO", book.customerName).text : null;
+  const lessonRow = isPast ? await lessonFor(month) : undefined;
+
   return (
     <>
       <div className="mt-1 flex items-baseline justify-between">
@@ -36,6 +57,25 @@ export default async function MonthPage({ searchParams }: { searchParams: Promis
         </div>
       </div>
       {until < to && <p className="text-stone-600">Up to today, {shortDate(today)}</p>}
+
+      {lesson && (
+        <section className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+          <div className="text-sm font-semibold uppercase tracking-wide text-emerald-800">Lesson from {label}</div>
+          <p className="mt-1">{lesson}</p>
+          {lessonRow ? (
+            <p className="mt-2 text-xs text-stone-600">
+              {lessonRow.status === "confirmed" ? `Month closed · saved to Walrus, blob ${lessonRow.blobId?.slice(0, 10)}…` : "Month closed · saving to Walrus…"}
+            </p>
+          ) : (
+            <form action={closeMonth} className="mt-3">
+              <input type="hidden" name="month" value={month} />
+              <button type="submit" className="rounded-xl bg-emerald-700 px-4 py-2 font-semibold text-white">
+                Close month and save the lesson
+              </button>
+            </form>
+          )}
+        </section>
+      )}
 
       <section className="mt-4 grid grid-cols-2 gap-3">
         <Stat label="Sales" value={formatNaira(period.revenueKobo)} note={`${period.salesCount} sales`} />
