@@ -6,6 +6,19 @@ export function localDate(instant: string, timezone: string): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit" }).format(ms);
 }
 
+/** An ISO instant with the timezone's offset for a local date and "HH:MM", e.g. "2026-11-06T10:30:00+01:00". */
+export function instantAt(date: string, time: string, timezone: string): string {
+  const probe = new Date(`${date}T12:00:00Z`);
+  const name = new Intl.DateTimeFormat("en-US", { timeZone: timezone, timeZoneName: "longOffset" }).formatToParts(probe).find((p) => p.type === "timeZoneName")?.value ?? "GMT";
+  const offset = name === "GMT" ? "+00:00" : name.replace("GMT", "");
+  return `${date}T${time}:00${offset}`;
+}
+
+/** The shop-local "HH:MM" of an instant. */
+export function localTime(instant: string, timezone: string): string {
+  return new Intl.DateTimeFormat("en-GB", { timeZone: timezone, hour: "2-digit", minute: "2-digit", hour12: false }).format(Date.parse(instant));
+}
+
 export function addDays(date: string, days: number): string {
   const d = new Date(`${date}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() + days);
