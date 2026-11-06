@@ -10,7 +10,8 @@ import { sponsorAddress, USDC_COIN_TYPE } from "./payments";
  * quoted USDC. Chosen over Cetus (pins its own copy of @mysten/sui 2.31) and 7K (@mysten/sui v1):
  * aftermath-ts-sdk 6.4.0 accepts @mysten/sui >=2 <3, so its Transaction is the same class as ours.
  */
-export const SWAP_SLIPPAGE = 0.01; // 1%
+export const SWAP_SLIPPAGE = 0.01; // 1%, the router API takes a fraction
+const MARGIN_PERCENT = 2n; // ask for 2 × slippage more USDC, in whole percent (integer money maths)
 
 let routerPromise: Promise<Router> | undefined;
 /**
@@ -41,7 +42,7 @@ export const isUsdc = (coinType: string) => normalizeStructTag(coinType) === nor
  */
 export async function swapRouteToUsdc(coinInType: string, usdcMicro: number): Promise<RouterCompleteTradeRoute> {
   if (isUsdc(coinInType)) throw new Error("USDC needs no swap");
-  const asked = BigInt(Math.ceil(usdcMicro * (1 + 2 * SWAP_SLIPPAGE)));
+  const asked = (BigInt(usdcMicro) * (100n + MARGIN_PERCENT) + 99n) / 100n; // rounded up
   return (await aftermath()).getCompleteTradeRouteGivenAmountOut({
     coinInType: normalizeStructTag(coinInType),
     coinOutType: normalizeStructTag(USDC_COIN_TYPE),
