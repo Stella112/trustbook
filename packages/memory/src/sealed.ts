@@ -69,33 +69,96 @@ export async function writeSealed(text: string, namespace: string, suiClient: un
   return res.blob_id;
 }
 
-/** Downloads a sealed blob from a public aggregator and decrypts it. Uses no relayer. */
-export async function readSealed(blobId: string, suiClient: unknown): Promise<string> {
-  let data: Uint8Array | null = null;
-  for (const agg of AGGREGATORS) {
-    const r = await fetch(`${agg}/v1/blobs/${blobId}`).catch(() => null);
-    if (r?.ok) {
-      data = new Uint8Array(await r.arrayBuffer());
-      break;
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Retries a call that may hit the Tatum free tier's rate limit (HTTP 429) or a brief outage. */
+async function withRetry<T>(fn: () => Promise<T>, attempts = 4): Promise<T> {
+  let last: unknown;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      last = err;
+      if (i < attempts - 1) await sleep(1500 * 2 ** i);
     }
   }
-  if (!data) throw new Error(`blob ${blobId} not available from any aggregator`);
-  const parsed = EncryptedObject.parse(data);
-  if (parsed.packageId !== PACKAGE_ID) throw new Error(`blob ${blobId} is not a Walrus Memory record`);
-  const c = creds();
-  const signer = keypair(c.key);
-  const servers = parsed.services.map(([id]) => id).filter((id) => OPEN_SERVERS.includes(id));
-  if (!servers.length) throw new Error(`blob ${blobId} was not sealed to the open key servers`);
-  const seal = new SealClient({ suiClient: suiClient as never, serverConfigs: servers.map((objectId) => ({ objectId, weight: 1 })), verifyKeyServers: true });
-  const sessionKey = await SessionKey.create({ address: signer.toSuiAddress(), packageId: PACKAGE_ID, ttlMin: 5, signer, suiClient: suiClient as never });
-  const tx = new Transaction();
-  tx.moveCall({
-    target: `${PACKAGE_ID}::account::seal_approve`,
-    arguments: [tx.pure.vector("u8", [...fromHex(parsed.id)]), tx.object(REGISTRY_ID), tx.object(c.accountId)],
-  });
-  const txBytes = await tx.build({ client: suiClient as never, onlyTransactionKind: true });
-  await seal.fetchKeys({ ids: [parsed.id], txBytes, sessionKey, threshold: parsed.threshold });
-  return new TextDecoder().decode(await seal.decrypt({ data, sessionKey, txBytes }));
+  throw last;
+}
+
+async function download(blobId: string): Promise<Uint8Array> {
+  for (const agg of AGGREGATORS) {
+    const r = await fetch(`${agg}/v1/blobs/${blobId}`).catch(() => null);
+    if (r?.ok) return new Uint8Array(await r.arrayBuffer());
+  }
+  throw new Error(`blob ${blobId} not available from any aggregator`);
+}
+
+export interface ReadResult {
+  blobId: string;
+  text?: string;
+  error?: string;
+}
+
+/**
+ * Downloads sealed blobs from public aggregators and decrypts them. Uses no relayer. Keys for all
+ * blobs are fetched in ONE request with one session key, as the Seal SDK recommends; this keeps the
+ * number of Tatum calls small enough for the free tier. Each blob gets its own text or error.
+ */
+export async function readSealedMany(blobIds: readonly string[], suiClient: unknown): Promise<ReadResult[]> {
+  const results = new Map<string, ReadResult>();
+  const fail = (blobId: string, err: unknown) => results.set(blobId, { blobId, error: err instanceof Error ? err.message : String(err) });
+  const parsed: { blobId: string; data: Uint8Array; id: string; threshold: number; servers: string[] }[] = [];
+  let next = 0;
+  await Promise.all(
+    Array.from({ length: 4 }, async () => {
+      while (next < blobIds.length) {
+        const blobId = blobIds[next++]!;
+        try {
+          const data = await withRetry(() => download(blobId), 3);
+          const obj = EncryptedObject.parse(data);
+          if (obj.packageId !== PACKAGE_ID) throw new Error(`blob ${blobId} is not a Walrus Memory record`);
+          const servers = obj.services.map(([id]) => id).filter((id) => OPEN_SERVERS.includes(id));
+          if (!servers.length) throw new Error(`blob ${blobId} was not sealed to the open key servers`);
+          parsed.push({ blobId, data, id: obj.id, threshold: obj.threshold, servers });
+        } catch (err) {
+          fail(blobId, err);
+        }
+      }
+    }),
+  );
+  if (parsed.length) {
+    try {
+      const c = creds();
+      const signer = keypair(c.key);
+      const servers = [...new Set(parsed.flatMap((p) => p.servers))];
+      const seal = new SealClient({ suiClient: suiClient as never, serverConfigs: servers.map((objectId) => ({ objectId, weight: 1 })), verifyKeyServers: true });
+      const sessionKey = await withRetry(() => SessionKey.create({ address: signer.toSuiAddress(), packageId: PACKAGE_ID, ttlMin: 10, signer, suiClient: suiClient as never }));
+      const tx = new Transaction();
+      for (const id of new Set(parsed.map((p) => p.id))) {
+        tx.moveCall({ target: `${PACKAGE_ID}::account::seal_approve`, arguments: [tx.pure.vector("u8", [...fromHex(id)]), tx.object(REGISTRY_ID), tx.object(c.accountId)] });
+      }
+      const txBytes = await withRetry(() => tx.build({ client: suiClient as never, onlyTransactionKind: true }));
+      const threshold = Math.max(...parsed.map((p) => p.threshold));
+      await withRetry(() => seal.fetchKeys({ ids: [...new Set(parsed.map((p) => p.id))], txBytes, sessionKey, threshold }));
+      for (const p of parsed) {
+        try {
+          results.set(p.blobId, { blobId: p.blobId, text: new TextDecoder().decode(await seal.decrypt({ data: p.data, sessionKey, txBytes })) });
+        } catch (err) {
+          fail(p.blobId, err);
+        }
+      }
+    } catch (err) {
+      for (const p of parsed) if (!results.has(p.blobId)) fail(p.blobId, err);
+    }
+  }
+  return blobIds.map((blobId) => results.get(blobId) ?? { blobId, error: "not read" });
+}
+
+/** Downloads one sealed blob and decrypts it. Uses no relayer. */
+export async function readSealed(blobId: string, suiClient: unknown): Promise<string> {
+  const [r] = await readSealedMany([blobId], suiClient);
+  if (r?.text === undefined) throw new Error(r?.error ?? `blob ${blobId} could not be read`);
+  return r.text;
 }
 
 function listClient(namespace = "trustbook"): MemWal {
@@ -142,22 +205,15 @@ export async function loadSealedBlobs(shopId: string, suiClient: unknown, opts: 
   }
   const blobs: SealedBlob[] = [];
   const problems: string[] = [];
-  for (const t of targets) {
-    let lastErr = "";
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      try {
-        const text = await readSealed(t.blobId, suiClient);
-        blobs.push({ ...t, text });
-        log(`read blob ${t.blobId}${t.namespace ? ` (${t.namespace})` : ""}`);
-        lastErr = "";
-        break;
-      } catch (err) {
-        lastErr = err instanceof Error ? err.message : String(err);
-        await new Promise((r) => setTimeout(r, 1500 * attempt));
-      }
+  const read = await readSealedMany(targets.map((t) => t.blobId), suiClient);
+  read.forEach((r, i) => {
+    const t = targets[i]!;
+    if (r.text === undefined) problems.push(`blob ${t.blobId} could not be read: ${r.error}`);
+    else {
+      blobs.push({ ...t, text: r.text });
+      log(`read blob ${t.blobId}${t.namespace ? ` (${t.namespace})` : ""}`);
     }
-    if (lastErr) problems.push(`blob ${t.blobId} could not be read: ${lastErr}`);
-  }
+  });
   return { blobs, problems };
 }
 

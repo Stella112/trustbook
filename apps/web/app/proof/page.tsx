@@ -3,6 +3,7 @@ import { formatNaira, formatUsdc } from "@trustbook/ledger";
 import { relayerHealth } from "@trustbook/memory";
 import { desc, eq, sql } from "drizzle-orm";
 import { db, schema } from "../../src/db/client";
+import { DEMO_SHOP_ID } from "../../src/seed/demo";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,14 @@ const settle = async <T,>(p: Promise<T>) => {
  * record of a confirmed write; nothing is hardcoded.
  */
 export default async function ProofPage() {
-  const anchorId = process.env.ANCHOR_OBJECT_ID;
+  // The demo shop's own anchor, created when it was first sealed (the Phase 0 test anchor holds a dummy hash).
+  const [demo] = await db.select({ anchorId: schema.shops.anchorObjectId }).from(schema.shops).where(eq(schema.shops.id, DEMO_SHOP_ID));
+  const anchorId = demo?.anchorId ?? undefined;
+  const seals = await db
+    .select({ kind: schema.seals.kind, fromDate: schema.seals.fromDate, toDate: schema.seals.toDate, dayCount: schema.seals.dayCount, blobId: schema.seals.blobId, sealedAt: schema.seals.sealedAt, anchorTx: schema.seals.anchorTx })
+    .from(schema.seals)
+    .where(eq(schema.seals.shopId, DEMO_SHOP_ID))
+    .orderBy(desc(schema.seals.sealedAt), desc(schema.seals.toDate));
   const [walrus, checkpoint, anchor, counts, recent] = await Promise.all([
     settle(relayerHealth()),
     settle(latestCheckpoint()),
@@ -107,6 +115,35 @@ export default async function ProofPage() {
           </p>
         ) : (
           <p className="text-red-700">Could not read the anchor: {anchor && !anchor.ok ? anchor.error : "not found"}</p>
+        )}
+      </section>
+
+      <section className="mt-6">
+        <h2 className="text-xl font-semibold">Books sealed to Walrus (Recovery Mode)</h2>
+        <p className="text-sm text-stone-600">
+          Each blob holds a week of day records, chained by hash; month checkpoints hold the totals recovery must match. Demo history was sealed on the date shown, not on its
+          business dates. <a className="underline" href="/verify">Verify these books yourself</a>.
+        </p>
+        {seals.length === 0 ? (
+          <p className="mt-2 text-stone-600">Nothing sealed yet.</p>
+        ) : (
+          <ul className="mt-2 divide-y divide-stone-200 rounded-xl bg-white text-sm shadow-sm">
+            {seals.map((s) => (
+              <li key={s.blobId} className="px-4 py-3">
+                <div className="font-semibold">
+                  {s.kind === "month" ? `Month checkpoint ${s.fromDate.slice(0, 7)}` : `Days ${s.fromDate} to ${s.toDate}`} · {s.dayCount} days in the chain
+                </div>
+                <div className="break-all font-mono text-xs text-stone-600">
+                  blob {s.blobId} · sealed {s.sealedAt.toISOString()}
+                </div>
+                {s.anchorTx && (
+                  <a href={`https://suiscan.xyz/mainnet/tx/${s.anchorTx}`} target="_blank" rel="noopener noreferrer" className="break-all font-mono text-xs underline">
+                    anchor update {s.anchorTx}
+                  </a>
+                )}
+              </li>
+            ))}
+          </ul>
         )}
       </section>
 

@@ -1,0 +1,28 @@
+import { DEMO_SHOP_ID } from "../../src/seed/demo";
+import { Verifier } from "./verifier";
+
+export const metadata = { title: "Verify the books · Trustbook" };
+
+/**
+ * Public, read-only (brief §6.8a): judges run the recovery proof in their own browser on the demo
+ * shop. No keys reach the browser; the records come from Walrus through a read-only route.
+ */
+export default function VerifyPage() {
+  return (
+    <main className="mx-auto max-w-2xl px-4 py-8">
+      <div className="inline-block rounded bg-amber-100 px-2 py-0.5 text-sm font-semibold text-amber-900">Demo data</div>
+      <h1 className="mt-2 text-3xl font-bold">Verify the books</h1>
+      <p className="mt-2 text-stone-700">
+        Trustbook seals each day&apos;s records to Walrus and publishes the newest day&apos;s fingerprint on Sui. This page reads those records back and proves, in your
+        browser, that nothing was changed, nothing is missing, and the totals add up.
+      </p>
+      <ul className="mt-3 list-disc pl-5 text-sm text-stone-700">
+        <li>Fingerprints: every day record matches its SHA-256 hash.</li>
+        <li>Chain: each day points to the day before, all the way back to the first.</li>
+        <li>Complete: the newest day matches the anchor on Sui, read through Tatum, so dropped days show up.</li>
+        <li>Totals and balances: rebuilt from the raw entries and compared to the sealed month checkpoints.</li>
+      </ul>
+      <Verifier shopId={DEMO_SHOP_ID} />
+    </main>
+  );
+}

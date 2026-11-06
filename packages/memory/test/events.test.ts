@@ -60,7 +60,7 @@ describe("dedupe keys of recovered memories", () => {
     const promise: Entry = { ...base("pr", "2026-11-03"), type: "PROMISE", customerId: "c1", saleId: "s", promisedDate: "2026-11-05" };
     const late = sale("s2", "2026-10-20", "2026-10-25");
     // The first payment clears the older debt (oldest first); the second keeps the promise.
-    const unpaid: Entry = { ...sale("s3", "2026-10-28", "2026-10-30"), customerId: "c2" };
+    const unpaid = { ...sale("s3", "2026-10-28", "2026-10-30"), customerId: "c2" } as Entry;
     const unpaidPromise: Entry = { ...base("pr3", "2026-10-29"), type: "PROMISE", customerId: "c2", saleId: "s3", promisedDate: "2026-10-31" };
     const entries = [late, unpaid, unpaidPromise, s, promise, pay("p0", "2026-11-04"), pay("p", "2026-11-05")];
     const written = [

@@ -1,6 +1,6 @@
 import { buildDayRecord, entriesRecordedOn, GENESIS, type DayRecord, type Entry } from "@trustbook/ledger";
 import { describe, expect, it } from "vitest";
-import { decodeSealed, encodeSealed, batchHeader, formatReport, sealCheckpoint, totalsAt, verifyRecovery, type BatchRecord, type CheckpointRecord, type RecoveryInput } from "../src/index";
+import { decodeSealed, encodeSealed, batchHeader, formatReport, sealCheckpoint, tamper, TAMPERS, totalsAt, verifyRecovery, type BatchRecord, type CheckpointRecord, type RecoveryInput } from "../src/index";
 
 const SHOP = "s1";
 const shop = { name: "Test Shop", ownerName: "Ada", timezone: "Africa/Lagos", openingCashKobo: 0, defaultDueDays: 14, suiAddress: null, mode: "DEMO" as const };
@@ -124,5 +124,20 @@ describe("provable recovery", () => {
     const text = encodeSealed(batchHeader(SHOP, b.from, b.to), b);
     expect(decodeSealed(text)).toMatchObject({ kind: "batch" });
     expect(decodeSealed(text.replace("2026-10-29 2026-10-31", "2026-10-29 2026-10-30"))).toBeNull();
+  });
+});
+
+describe("tampering demo (/verify)", () => {
+  it("each tamper fails exactly the step it is meant to, on a copy", () => {
+    const { input } = sealed();
+    const original = JSON.stringify(input);
+    for (const t of TAMPERS) {
+      const { input: bad } = tamper(input, t.kind);
+      const r = verifyRecovery(bad);
+      expect(r.ok, t.kind).toBe(false);
+      expect(status(r, t.expectFail).status, t.kind).toBe("FAIL");
+    }
+    expect(JSON.stringify(input)).toBe(original); // the real records are never altered
+    expect(verifyRecovery(input).ok).toBe(true);
   });
 });
