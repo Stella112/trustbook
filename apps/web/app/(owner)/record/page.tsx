@@ -8,12 +8,14 @@ import { ulid } from "ulid";
 import { loadBook } from "../../../src/lib/book";
 import { signDraft } from "../../../src/lib/draft";
 import { confirmDraft } from "./actions";
+import { VoiceButton } from "../../../src/ui/voice-button";
 
 const MAX_NOTE = 300;
 
 /** Reads the owner's note with Gemini, then shows a confirmation card. Nothing is saved until Confirm. */
-export default async function RecordPage({ searchParams }: { searchParams: Promise<{ text?: string; error?: string; edit?: string }> }) {
-  const { text = "", error, edit } = await searchParams;
+export default async function RecordPage({ searchParams }: { searchParams: Promise<{ text?: string; error?: string; edit?: string; voice?: string }> }) {
+  const { text = "", error, edit, voice } = await searchParams;
+  const fromVoice = voice === "1";
   const note = text.trim().slice(0, MAX_NOTE);
   if (edit !== undefined) return <NoteBox note={edit.slice(0, MAX_NOTE)} />;
   if (!note) return <NoteBox note="" message={error === "expired" ? "That card expired or was changed. Please record it again." : undefined} />;
@@ -38,7 +40,7 @@ export default async function RecordPage({ searchParams }: { searchParams: Promi
       items: book.items,
       debts: book.debts,
       newId: ulid,
-      source: "text",
+      source: fromVoice ? "voice" : "text",
     });
   }
 
@@ -54,7 +56,9 @@ export default async function RecordPage({ searchParams }: { searchParams: Promi
   return (
     <>
       <h1 className="mt-1 text-3xl font-bold">Check this</h1>
-      <p className="mt-1 text-stone-600">“{note}”</p>
+      <p className="mt-1 text-stone-600">
+        {fromVoice && <span className="font-semibold">You said: </span>}“{note}”
+      </p>
       <div className="mt-4 rounded-xl border-2 border-emerald-700 bg-white p-4">
         <div className="text-sm font-semibold uppercase tracking-wide text-emerald-800">{KIND_TITLE[draft.kind]}</div>
         <ul className="mt-2 space-y-1 text-lg">
@@ -132,6 +136,7 @@ function NoteBox({ note, message }: { note: string; message?: string }) {
           Read it
         </button>
       </form>
+      <VoiceButton />
     </div>
   );
 }
