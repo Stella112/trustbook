@@ -36,6 +36,13 @@
       "when": 1793962848490,
       "tag": "0004_outbox",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793965256959,
+      "tag": "0005_pay_quotes",
+      "breakpoints": true
     }
   ]
 }

@@ -47,3 +47,5 @@ export async function readAnchor(objectId: string): Promise<AnchorState | null> 
   const text = (b64: string) => Buffer.from(b64, "base64").toString("utf8");
   return { lastDay: text(j.last_day ?? ""), headHash: Buffer.from(j.head_hash ?? "", "base64").toString("hex"), dayCount: String(j.day_count), updatedMs: String(j.updated_ms), lastTxDigest: o?.previousTransaction?.digest ?? null };
 }
+
+export * from "./payments";

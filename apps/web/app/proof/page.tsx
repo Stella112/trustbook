@@ -1,4 +1,5 @@
 import { latestCheckpoint, readAnchor } from "@trustbook/chain";
+import { formatNaira, formatUsdc } from "@trustbook/ledger";
 import { relayerHealth } from "@trustbook/memory";
 import { desc, eq, sql } from "drizzle-orm";
 import { db, schema } from "../../src/db/client";
@@ -41,6 +42,12 @@ export default async function ProofPage() {
       .orderBy(desc(schema.outbox.confirmedAt))
       .limit(50),
   ]);
+  const payments = await db
+    .select({ digest: schema.payQuotes.digest, amountKobo: schema.payQuotes.amountKobo, usdcMicro: schema.payQuotes.usdcMicro, paidAt: schema.payQuotes.paidAt })
+    .from(schema.payQuotes)
+    .where(eq(schema.payQuotes.status, "paid"))
+    .orderBy(desc(schema.payQuotes.paidAt))
+    .limit(20);
   const count = (status: string, demo?: boolean) => counts.filter((c) => c.status === status && (demo === undefined || c.demo === demo)).reduce((s, c) => s + c.n, 0);
   const confirmed = count("confirmed");
 
@@ -105,7 +112,23 @@ export default async function ProofPage() {
 
       <section className="mt-6">
         <h2 className="text-xl font-semibold">Payments verified on Sui</h2>
-        <p className="text-stone-600">None yet. Sui payments arrive in Phase 4.</p>
+        {payments.length === 0 ? (
+          <p className="text-stone-600">No Sui payments yet.</p>
+        ) : (
+          <ul className="mt-2 divide-y divide-stone-200 rounded-xl bg-white shadow-sm">
+            {payments.map((p) => (
+              <li key={p.digest} className="px-4 py-3 text-sm">
+                <div className="font-semibold">
+                  {formatNaira(p.amountKobo)} · {formatUsdc(p.usdcMicro)} USDC · verified through Tatum
+                </div>
+                <a href={`https://suiscan.xyz/mainnet/tx/${p.digest}`} target="_blank" rel="noopener noreferrer" className="break-all font-mono text-xs underline">
+                  {p.digest}
+                </a>
+                <div className="text-xs text-stone-500">{p.paidAt?.toISOString()}</div>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
     </main>
   );

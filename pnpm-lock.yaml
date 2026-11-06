@@ -54,6 +54,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@mysten/dapp-kit-react':
+        specifier: 2.1.44
+        version: 2.1.44(@mysten/sui@2.39.0(typescript@7.0.2))(@types/react@19.3.0)(react@19.3.1)(typescript@7.0.2)
       '@mysten/sui':
         specifier: ^2.39.0
         version: 2.39.0(typescript@7.0.2)

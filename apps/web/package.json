@@ -13,6 +13,7 @@
     "seed:demo": "tsx scripts/seed-demo.ts"
   },
   "dependencies": {
+    "@mysten/dapp-kit-react": "2.1.44",
     "@mysten/sui": "^2.39.0",
     "@trustbook/agent": "workspace:*",
     "@trustbook/chain": "workspace:*",

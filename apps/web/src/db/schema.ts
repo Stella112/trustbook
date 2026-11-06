@@ -46,6 +46,35 @@ export const items = pgTable(
 );
 
 /**
+ * A Sui payment in progress (brief §6.5): the rate is locked for 30 minutes, the exact transaction
+ * the server built is stored with its digest, and a digest can complete only one payment.
+ */
+export const payQuotes = pgTable(
+  "pay_quotes",
+  {
+    id: text("id").primaryKey(),
+    shopId: text("shop_id").notNull().references(() => shops.id),
+    customerId: text("customer_id").notNull(),
+    saleId: text("sale_id"),
+    amountKobo: bigint("amount_kobo", { mode: "number" }).notNull(),
+    usdcMicro: bigint("usdc_micro", { mode: "number" }).notNull(),
+    rate: text("rate").notNull(),
+    recipient: text("recipient").notNull(),
+    sender: text("sender"),
+    txBytes: text("tx_bytes"),
+    expectedDigest: text("expected_digest"),
+    digest: text("digest"),
+    status: text("status", { enum: ["quoted", "built", "paid", "failed"] }).notNull().default("quoted"),
+    error: text("error"),
+    entryId: text("entry_id"),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    paidAt: timestamp("paid_at", { withTimezone: true }),
+  },
+  (t) => [uniqueIndex("pay_quotes_digest_idx").on(t.digest)],
+);
+
+/**
  * Every Walrus write goes through this outbox (brief §6.6): pending → submitted → confirmed | failed.
  * A memory counts only once confirmed with a blob id.
  */

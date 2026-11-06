@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatNaira, parseNairaToKobo } from "../src/index";
+import { formatNaira, formatUsdc, koboToUsdcMicro, parseNairaToKobo } from "../src/index";
 
 describe("naira parsing and formatting", () => {
   it("parses whole, decimal, comma and shorthand amounts into kobo", () => {
@@ -13,6 +13,15 @@ describe("naira parsing and formatting", () => {
   });
   it("rejects text that is not an amount", () => {
     for (const bad of ["", "abc", "-5", "1.234", "1,2.3.4", "5 naira"]) expect(parseNairaToKobo(bad)).toBeNull();
+  });
+  it("converts kobo to USDC micro-units at a decimal-string rate, rounding up", () => {
+    // ₦100 at ₦1,345.41476546 per USDC = 0.0743265… USDC
+    expect(koboToUsdcMicro(10_000, "1345.41476546")).toBe(74_327);
+    expect(koboToUsdcMicro(134_541, "1345.41")).toBe(1_000_000); // exact: 1 USDC
+    expect(koboToUsdcMicro(1, "1500")).toBe(7); // 0.00000666… rounds up
+    expect(formatUsdc(74_327)).toBe("0.074327");
+    expect(() => koboToUsdcMicro(100, "abc")).toThrow();
+    expect(() => koboToUsdcMicro(100, "0")).toThrow();
   });
   it("formats kobo as naira", () => {
     expect(formatNaira(15_000_000)).toBe("₦150,000");

@@ -91,7 +91,7 @@ export function eventsForNewEntries(before: readonly Entry[], added: readonly En
       const daysLate = due ? daysBetween(due, paidOn) : null;
       const timing = daysLate === null ? "" : daysLate > 0 ? `, ${daysLate} day${daysLate === 1 ? "" : "s"} after the promised date` : daysLate < 0 ? `, ${-daysLate} day${daysLate === -1 ? "" : "s"} early` : ", on the promised date";
       const name = ctx.customerName(e.customerId);
-      out.push(make(ctx, "payment", e.occurredAt, `payment:${e.id}`, { amountKobo: e.amountKobo, method: e.method, daysLate }, `${name} paid ${formatNaira(e.amountKobo)}${timing}.`, e.customerId));
+      out.push(make(ctx, "payment", e.occurredAt, `payment:${e.id}`, { amountKobo: e.amountKobo, method: e.method, daysLate }, `${name} paid ${formatNaira(e.amountKobo)}${e.method === "sui" ? " on Sui" : ""}${timing}.`, e.customerId));
     }
     if (e.type === "PROMISE") {
       touched.add(e.customerId);

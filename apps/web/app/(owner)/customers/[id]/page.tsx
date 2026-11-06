@@ -3,12 +3,16 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { AdviceLoading, CreditAdvice } from "../../../../src/ui/credit-advice";
 import { loadBook } from "../../../../src/lib/book";
+import { appUrl, signPayLink, whatsappLink } from "../../../../src/lib/paylink";
+import { CopyLink } from "../../../../src/ui/copy-link";
+import { markAsPaid } from "./actions";
 import { EntryLine } from "../../../../src/ui/entry-line";
 import { LabelBadge, Section, shortDate, Stat } from "../../../../src/ui/kit";
 
 /** One customer: what they owe, how they pay, and their full history. */
-export default async function CustomerPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function CustomerPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ paid?: string; error?: string }> }) {
   const { id } = await params;
+  const { paid, error } = await searchParams;
   const book = await loadBook();
   const customer = book.customers.find((c) => c.id === id);
   if (!customer) notFound();
@@ -16,6 +20,12 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
   const trust = trustLabel(book.debts, id, book.overrides[id]);
   const open = book.debts.debts.filter((d) => d.customerId === id && d.openKobo > 0);
   const history = customerHistory(book.entries, id);
+  const owed = balance?.owedKobo ?? 0;
+  const payUrl = owed > 0 ? `${appUrl()}/p/${signPayLink({ shopId: book.shop.id, customerId: id, amountKobo: owed })}` : "";
+  const whatsapp =
+    owed > 0 && customer.phone
+      ? whatsappLink(customer.phone, `Hello ${customer.name}, this is ${book.shop.name}. You owe ${formatNaira(owed)}. You can pay here: ${payUrl} Thank you!`)
+      : null;
 
   return (
     <>
@@ -32,6 +42,38 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
         <Stat label="Overdue" value={formatNaira(balance?.overdueKobo ?? 0)} tone={(balance?.overdueKobo ?? 0) > 0 ? "warn" : undefined} />
       </section>
       {(balance?.creditKobo ?? 0) > 0 && <p className="mt-2 text-sm text-emerald-800">Holds {formatNaira(balance!.creditKobo)} credit from paying extra.</p>}
+      {paid && <p role="status" className="mt-3 rounded-lg bg-emerald-100 px-3 py-2 font-semibold text-emerald-900">Payment saved.</p>}
+
+      {owed > 0 && (
+        <Section title="Get paid">
+          <div className="space-y-3 rounded-xl bg-white p-4 shadow-sm">
+            {whatsapp ? (
+              <a href={whatsapp} target="_blank" rel="noopener noreferrer" className="block rounded-xl bg-emerald-700 px-4 py-3 text-center text-lg font-semibold text-white">
+                Send reminder on WhatsApp
+              </a>
+            ) : (
+              <p className="text-sm text-stone-600">Add a phone number to send WhatsApp reminders.</p>
+            )}
+            <CopyLink url={payUrl} />
+            <form action={markAsPaid} className="border-t border-stone-100 pt-3">
+              <input type="hidden" name="customerId" value={id} />
+              <div className="text-sm font-medium">Paid in cash or by transfer?</div>
+              <div className="mt-2 flex gap-2">
+                <input name="amount" required inputMode="decimal" placeholder={formatNaira(owed).replace("₦", "")} className="min-w-0 flex-1 rounded-xl border border-stone-300 px-3 py-2" />
+                <select name="method" className="rounded-xl border border-stone-300 bg-white px-2 py-2">
+                  <option value="cash">Cash</option>
+                  <option value="transfer">Transfer</option>
+                </select>
+              </div>
+              {error === "amount" && <p className="mt-1 text-sm text-red-700">Write the amount like 5,000 or 5k.</p>}
+              <button type="submit" className="mt-2 w-full rounded-xl border border-stone-400 px-4 py-2 font-semibold">
+                Mark as paid
+              </button>
+              <p className="mt-1 text-xs text-stone-500">Recorded as merchant-confirmed.</p>
+            </form>
+          </div>
+        </Section>
+      )}
 
       <Section title="Unpaid debts">
         {open.length === 0 ? (
