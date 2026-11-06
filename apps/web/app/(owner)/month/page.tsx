@@ -2,6 +2,7 @@ import { addDays, creditGiven, dayList, formatNaira, monthRange, monthSummary } 
 import { and, eq } from "drizzle-orm";
 import Link from "next/link";
 import { after } from "next/server";
+import { Suspense } from "react";
 import { db, schema } from "../../../src/db/client";
 import { shopCodeOf } from "../../../src/lib/auth";
 import { buildMonthLesson } from "../../../src/memory/lesson";
@@ -9,6 +10,7 @@ import { enqueue, processOutbox } from "../../../src/memory/outbox";
 import { closeMonth } from "./actions";
 import { loadBook } from "../../../src/lib/book";
 import { Section, shortDate, Stat } from "../../../src/ui/kit";
+import { BooksSecured } from "../../../src/ui/books-secured";
 import { signOut } from "../actions";
 
 /** This month: sales, profit (or why it is unavailable), credit, and a list of days to open. */
@@ -129,6 +131,12 @@ export default async function MonthPage({ searchParams }: { searchParams: Promis
             ))}
           </ul>
         )}
+      </Section>
+
+      <Section title="Your records on Walrus">
+        <Suspense fallback={<div className="rounded-xl bg-white p-4 text-stone-600 shadow-sm">Checking storage…</div>}>
+          <BooksSecured shopId={shop.id} timezone={shop.timezone} />
+        </Suspense>
       </Section>
 
       <div className="mt-8 border-t border-stone-200 pt-4 text-sm text-stone-600">

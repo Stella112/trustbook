@@ -218,6 +218,49 @@ export async function loadSealedBlobs(shopId: string, suiClient: unknown, opts: 
   return { blobs, problems };
 }
 
+export interface ShopStorage {
+  /** Active records of the shop on Walrus (ledger and behaviour). */
+  records: number;
+  /** Earliest expiry among them: the books are only as safe as their first record to lapse. */
+  securedUntil: string | null;
+  /** Records whose expiry the relayer has not filled in yet (it appears a little after a write). */
+  expiryUnknown: number;
+  checkedAt: string;
+}
+
+let storageCache: { shopId: string; at: number; value: ShopStorage } | undefined;
+
+/**
+ * How long the shop's records stay stored (brief P1 "Books secured until"). Reads `expires_at` for
+ * every active record of the shop through the relayer's listing; cached for 10 minutes.
+ */
+export async function shopStorage(shopId: string): Promise<ShopStorage> {
+  if (storageCache?.shopId === shopId && Date.now() - storageCache.at < 10 * 60_000) return storageCache.value;
+  const prefix = `trustbook:${shopId}:`;
+  const namespaces = (await listAllNamespaces()).filter((n) => n.name.startsWith(prefix)).map((n) => n.name);
+  const m = listClient();
+  let records = 0;
+  let expiryUnknown = 0;
+  let securedUntil: string | null = null;
+  for (const namespace of namespaces) {
+    let cursor: string | undefined;
+    for (;;) {
+      const page = await withRetry(() => m.listMemories({ namespace, ...(cursor ? { cursor } : {}) }));
+      for (const x of page.memories) {
+        if (x.status !== "active") continue;
+        records++;
+        if (!x.expires_at) expiryUnknown++;
+        else if (!securedUntil || x.expires_at < securedUntil) securedUntil = x.expires_at;
+      }
+      if (!page.has_more || !page.next_cursor) break;
+      cursor = page.next_cursor;
+    }
+  }
+  const value = { records, securedUntil, expiryUnknown, checkedAt: new Date().toISOString() };
+  storageCache = { shopId, at: Date.now(), value };
+  return value;
+}
+
 /** Active blob ids in one namespace, paging through the whole inventory. */
 export async function listBlobIds(namespace: string): Promise<string[]> {
   const m = listClient(namespace);
