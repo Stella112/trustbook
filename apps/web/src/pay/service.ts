@@ -1,4 +1,4 @@
-import { buildSponsoredUsdcTransfer, executeSponsored, USDC_COIN_TYPE, usdcNgnRate, verifyUsdcPayment } from "@trustbook/chain";
+import { buildSponsoredSwapPayment, buildSponsoredUsdcTransfer, executeSponsored, isUsdc, swapRouteToUsdc, swappableBalances, USDC_COIN_TYPE, usdcNgnRate, verifyUsdcPayment } from "@trustbook/chain";
 import { computeDebts, effectiveEntries, instantAt, koboToUsdcMicro, localDate, localTime, proposeAllocations, validateEntry } from "@trustbook/ledger";
 import { isValidSuiAddress, normalizeSuiAddress } from "@mysten/sui/utils";
 import { and, asc, eq } from "drizzle-orm";
@@ -41,13 +41,34 @@ async function liveQuote(quoteId: string) {
   return q;
 }
 
-/** Step 2: build the exact sponsored transaction for the customer's wallet to sign. */
-export async function buildForQuote(quoteId: string, sender: string) {
+/** Tokens in the customer's wallet that can be swapped to USDC for this payment (brief P1). */
+export async function payableTokens(quoteId: string, sender: string) {
+  if (!isValidSuiAddress(sender)) throw new PayError("That wallet address is not valid.");
+  await liveQuote(quoteId);
+  return swappableBalances(sender);
+}
+
+/** About how much of a token pays this debt, from a live route. The shop still gets the exact USDC. */
+export async function estimateSwap(quoteId: string, coinType: string) {
+  const q = await liveQuote(quoteId);
+  const route = await swapRouteToUsdc(coinType, q.usdcMicro);
+  return { coinType, amountIn: route.coinIn.amount.toString() };
+}
+
+/**
+ * Step 2: build the exact sponsored transaction for the customer's wallet to sign. With a token other
+ * than USDC, it is swapped to USDC in the same transaction and the shop receives the exact amount.
+ */
+export async function buildForQuote(quoteId: string, sender: string, coinType?: string) {
   if (!isValidSuiAddress(sender)) throw new PayError("That wallet address is not valid.");
   const q = await liveQuote(quoteId);
-  const { bytes, digest } = await buildSponsoredUsdcTransfer({ sender, recipient: q.recipient, amountMicro: q.usdcMicro });
+  const swap = coinType && !isUsdc(coinType);
+  const built = swap
+    ? await buildSponsoredSwapPayment({ sender, recipient: q.recipient, usdcMicro: q.usdcMicro, coinInType: coinType })
+    : await buildSponsoredUsdcTransfer({ sender, recipient: q.recipient, amountMicro: q.usdcMicro });
+  const { bytes, digest } = built;
   await db.update(schema.payQuotes).set({ sender: normalizeSuiAddress(sender), txBytes: bytes, expectedDigest: digest, status: "built" }).where(eq(schema.payQuotes.id, quoteId));
-  return { bytes, digest };
+  return { bytes, digest, coinInAmount: "coinInAmount" in built ? built.coinInAmount : null };
 }
 
 /**
@@ -63,7 +84,7 @@ export async function submitForQuote(quoteId: string, signature: string) {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     await db.update(schema.payQuotes).set({ status: "failed", error: message.slice(0, 500) }).where(eq(schema.payQuotes.id, quoteId));
-    throw new PayError(/insufficient|balance/i.test(message) ? "Your wallet does not have enough USDC for this payment." : "The payment did not go through. Nothing was taken. Please try again.");
+    throw new PayError(/insufficient|balance/i.test(message) ? "Your wallet does not have enough for this payment." : /slippage|EAmount|split/i.test(message) ? "The price moved while you were paying. Nothing was taken. Please try again." : "The payment did not go through. Nothing was taken. Please try again.");
   }
   if (digest !== q.expectedDigest) throw new PayError("The payment does not match what was prepared.");
   return recordVerified(quoteId, digest);

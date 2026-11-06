@@ -52,3 +52,4 @@ export async function readAnchor(objectId: string): Promise<AnchorState | null> 
 
 export * from "./payments";
 export * from "./anchor";
+export * from "./swap";

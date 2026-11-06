@@ -148,6 +148,9 @@ importers:
       '@mysten/sui':
         specifier: ^2.39.0
         version: 2.39.0(typescript@7.0.2)
+      aftermath-ts-sdk:
+        specifier: 6.4.0
+        version: 6.4.0(@mysten/sui@2.39.0(typescript@7.0.2))
     devDependencies:
       '@types/node':
         specifier: ^26.6.6
@@ -1575,6 +1578,11 @@ packages:
   '@workflow/serde@4.1.0':
     resolution: {integrity: sha512-pav4F2BoirECWR7Nf1TKt+2eETcBj7jj4cBefQ8VXQCA6NPkaKeLfj/zMgi+3zYV5ZIBT4GuUiphsj0/b9hPQQ==}
 
+  aftermath-ts-sdk@6.4.0:
+    resolution: {integrity: sha512-BaAO/OmrPRekS0tQWyhtHMPpc3kfNbvepT/v/U2WmYTKFiAbjF8VeuWV6cEiHdbjAtU+NCSxE8j/JJZ1GBZ4xQ==}
+    peerDependencies:
+      '@mysten/sui': '>=2.0.0 <3.0.0'
+
   agent-base@7.1.4:
     resolution: {integrity: sha512-MnA+YT8fwfJPgBx3m60MNqakm30XOkyIoH1y6huTQvC0PwZG7ki8NacLBcrPbNoo8vEZy7Jpuk7+jMO+CUovTQ==}
     engines: {node: '>= 14'}
@@ -1655,6 +1663,9 @@ packages:
 
   dataloader@2.2.3:
     resolution: {integrity: sha512-y2krtASINtPFS1rSDjacrFgn1dcUuoREVabwlOGOe4SdxenREqwjwjElAdwvbGM7kgZz9a3KVicWR7vcz8rnzA==}
+
+  date-fns@4.4.0:
+    resolution: {integrity: sha512-+1UMbeh68lH1SegH83CGWwpb6OHHbpSgr3+s5Eww5M4CAgswBpoWS0AjTOfEJ33HiYKz1hdj/KTFprzXHmq/6w==}
 
   debug@4.4.3:
     resolution: {integrity: sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==}
@@ -3339,6 +3350,11 @@ snapshots:
 
   '@workflow/serde@4.1.0': {}
 
+  aftermath-ts-sdk@6.4.0(@mysten/sui@2.39.0(typescript@7.0.2)):
+    dependencies:
+      '@mysten/sui': 2.39.0(typescript@7.0.2)
+      date-fns: 4.4.0
+
   agent-base@7.1.4: {}
 
   ai@7.0.162(zod@4.6.7):
@@ -3395,6 +3411,8 @@ snapshots:
   data-uri-to-buffer@4.0.1: {}
 
   dataloader@2.2.3: {}
+
+  date-fns@4.4.0: {}
 
   debug@4.4.3:
     dependencies:
