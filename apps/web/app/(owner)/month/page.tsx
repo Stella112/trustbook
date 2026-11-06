@@ -132,6 +132,10 @@ export default async function MonthPage({ searchParams }: { searchParams: Promis
       </Section>
 
       <div className="mt-8 border-t border-stone-200 pt-4 text-sm text-stone-600">
+        <a href="/api/export" className="flex min-h-12 items-center justify-center rounded-xl border border-stone-300 bg-white px-4 font-semibold text-stone-900" download>
+          Download all records (CSV)
+        </a>
+        <p className="mt-1 text-xs">Every sale, payment and correction ever recorded, for Excel or Google Sheets.</p>
         {shop.mode === "LIVE" && (
           <p>
             Shop code <span className="font-mono font-semibold">{shopCodeOf(shop.id)}</span>
