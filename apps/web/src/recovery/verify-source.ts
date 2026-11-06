@@ -3,12 +3,14 @@ import { listAllNamespaces, listBlobIds, readSealedMany } from "@trustbook/memor
 import { decodeSealed, type Sealed } from "@trustbook/recovery-core";
 import { eq } from "drizzle-orm";
 import { db, schema } from "../db/client";
+import { initials, isPublicShop } from "../lib/public-shops";
 
 /**
  * The read-only source behind the public /verify page (brief §6.8a). It hands the browser the
  * sealed records exactly as read from Walrus, plus the anchor as read through Tatum; the browser
- * runs the checks itself. Keys never leave the server. Only DEMO shops are served, and phone
- * numbers are removed (they are not part of any fingerprint).
+ * runs the checks itself. Keys never leave the server. Only public shops are served (see
+ * lib/public-shops): phone numbers are always removed, and a live shop's customer and owner names
+ * become initials. Names are not part of any fingerprint, so this never affects the proof.
  */
 export interface VerifyIndex {
   shopId: string;
@@ -20,20 +22,22 @@ export interface VerifyIndex {
 }
 
 const INDEX_TTL_MS = 2 * 60_000;
-let indexCache: { at: number; shopId: string; value: VerifyIndex } | undefined;
+const indexCache = new Map<string, { at: number; value: VerifyIndex; live: boolean }>();
 // Walrus blobs never change, so a read blob can be kept for the life of the server process.
 const blobCache = new Map<string, Sealed>();
 
-async function demoShop(shopId: string) {
+async function publicShop(shopId: string) {
+  if (!isPublicShop(shopId)) throw new Error("this shop's books are not public");
   const [shop] = await db.select().from(schema.shops).where(eq(schema.shops.id, shopId));
-  if (!shop || shop.mode !== "DEMO") throw new Error("only the demo shop can be verified publicly");
+  if (!shop) throw new Error("no such shop");
   if (!shop.anchorObjectId) throw new Error("this shop has not been sealed yet");
   return { ...shop, anchorObjectId: shop.anchorObjectId };
 }
 
 export async function verifyIndex(shopId: string): Promise<VerifyIndex> {
-  if (indexCache && indexCache.shopId === shopId && Date.now() - indexCache.at < INDEX_TTL_MS) return indexCache.value;
-  const shop = await demoShop(shopId);
+  const cached = indexCache.get(shopId);
+  if (cached && Date.now() - cached.at < INDEX_TTL_MS) return cached.value;
+  const shop = await publicShop(shopId);
   const prefix = `trustbook:${shopId}:ledger:`;
   const namespaces = (await listAllNamespaces()).filter((n) => n.name.startsWith(prefix)).map((n) => n.name).sort();
   const blobs: VerifyIndex["blobs"] = [];
@@ -49,7 +53,7 @@ export async function verifyIndex(shopId: string): Promise<VerifyIndex> {
     anchorError = `anchor read failed: ${err instanceof Error ? err.message.slice(0, 160) : String(err)}`;
   }
   const value: VerifyIndex = { shopId, shopName: shop.name, anchorId: shop.anchorObjectId, anchor, anchorError, blobs };
-  indexCache = { at: Date.now(), shopId, value };
+  indexCache.set(shopId, { at: Date.now(), value, live: shop.mode === "LIVE" });
   return value;
 }
 
@@ -61,6 +65,7 @@ export interface VerifyRecords {
 /** Every sealed record of the shop, read from Walrus in one batch (one key request). */
 export async function verifyRecords(shopId: string): Promise<VerifyRecords> {
   const index = await verifyIndex(shopId);
+  const live = indexCache.get(shopId)?.live ?? true;
   const missing = index.blobs.map((b) => b.blobId).filter((id) => !blobCache.has(id));
   const problems: string[] = [];
   if (missing.length) {
@@ -79,8 +84,9 @@ export async function verifyRecords(shopId: string): Promise<VerifyRecords> {
       records.push({ blobId: b.blobId, sealed });
       continue;
     }
-    const customers = Object.fromEntries(Object.entries(sealed.record.directory.customers).map(([id, c]) => [id, { name: c.name, phone: null }]));
-    records.push({ blobId: b.blobId, sealed: { kind: "batch", record: { ...sealed.record, directory: { ...sealed.record.directory, customers } } } });
+    const customers = Object.fromEntries(Object.entries(sealed.record.directory.customers).map(([id, c]) => [id, { name: live ? initials(c.name) : c.name, phone: null }]));
+    const shopInfo = live ? { ...sealed.record.shop, ownerName: initials(sealed.record.shop.ownerName) } : sealed.record.shop;
+    records.push({ blobId: b.blobId, sealed: { kind: "batch", record: { ...sealed.record, shop: shopInfo, directory: { ...sealed.record.directory, customers } } } });
   }
   return { records, problems };
 }
