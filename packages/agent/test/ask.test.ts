@@ -59,3 +59,12 @@ describe("money questions added 7 Nov", () => {
     expect(a.text).toMatch(/^Your best sellers: Crate of eggs ₦13,500 \(no cost price/);
   });
 });
+
+describe("credit check with the owner's own limit", () => {
+  it("names the owner's limit when going over it", () => {
+    const withLimit = { ...ctx, customers: [{ id: "c-tunde", name: "Tunde", creditLimitKobo: 1_000_000 }] };
+    const a = answer({ intent: "credit_check", customerName: "Tunde", amountPhrase: "5k" }, withLimit);
+    expect(a.text).toMatch(/above your limit of ₦10,000/);
+    expect(a.facts).toContainEqual({ label: "Your limit", value: "₦10,000" });
+  });
+});

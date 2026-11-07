@@ -1,4 +1,4 @@
-import { formatNaira } from "@trustbook/ledger";
+import { creditLimitCheck, formatNaira } from "@trustbook/ledger";
 import { adviceFor } from "../lib/advice";
 import type { Book } from "../lib/book";
 import { LabelBadge, shortDate } from "./kit";
@@ -14,7 +14,8 @@ export async function CreditAdvice({ book, customerId, amountKobo }: { book: Boo
   const balance = { owedKobo: a.owedKobo, overdueKobo: a.overdueKobo };
   const memories = a.memories ?? [];
   const recallError = a.memories === null;
-  const overLimit = amountKobo !== undefined && trust.suggestedLimitKobo !== null && amountKobo > trust.suggestedLimitKobo;
+  const ownerLimit = book.customers.find((c) => c.id === customerId)?.creditLimitKobo;
+  const limit = creditLimitCheck(balance.owedKobo, amountKobo ?? 0, ownerLimit, trust.suggestedLimitKobo);
 
   return (
     <section className={`mt-4 rounded-xl border p-4 ${trust.label === "High risk" ? "border-red-300 bg-red-50" : "border-stone-200 bg-white"}`}>
@@ -27,10 +28,10 @@ export async function CreditAdvice({ book, customerId, amountKobo }: { book: Boo
         {trust.evidence}. Owes {formatNaira(balance?.owedKobo ?? 0)}
         {balance.overdueKobo > 0 ? `, ${formatNaira(balance.overdueKobo)} overdue` : ""}.
       </p>
-      {trust.suggestedLimitKobo !== null && (
-        <p className={`mt-1 ${overLimit ? "font-semibold text-red-800" : "text-stone-700"}`}>
-          Suggested limit {formatNaira(trust.suggestedLimitKobo)}
-          {overLimit ? ` — this credit of ${formatNaira(amountKobo!)} is above it.` : "."}
+      {limit.limitKobo !== null && (
+        <p className={`mt-1 ${limit.over ? "font-semibold text-red-800" : "text-stone-700"}`}>
+          {limit.source === "owner" ? "Your limit" : "Suggested limit"} {formatNaira(limit.limitKobo)}
+          {limit.over ? ` — with this credit they would owe ${formatNaira(limit.afterKobo)}.` : "."}
         </p>
       )}
       <div className="mt-3 border-t border-stone-200 pt-2">

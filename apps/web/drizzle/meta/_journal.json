@@ -71,6 +71,13 @@
       "when": 1794066449174,
       "tag": "0009_telegram",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794083468895,
+      "tag": "0010_lonely_spyke",
+      "breakpoints": true
     }
   ]
 }

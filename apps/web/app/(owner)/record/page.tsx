@@ -1,5 +1,5 @@
 import { buildDraft, parseNote, QuotaError, type Draft } from "@trustbook/agent";
-import { instantAt, localTime } from "@trustbook/ledger";
+import { creditLimitCheck, formatNaira, instantAt, localTime, trustLabel } from "@trustbook/ledger";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { AdviceLoading, CreditAdvice } from "../../../src/ui/credit-advice";
@@ -50,6 +50,14 @@ export default async function RecordPage({ searchParams }: { searchParams: Promi
     creditSale?.type === "SALE" && creditSale.customerId && book.customers.some((c) => c.id === creditSale.customerId)
       ? { customerId: creditSale.customerId, amountKobo: creditSale.totalKobo - creditSale.paidNowKobo }
       : null;
+  let limitWarning: string | null = null;
+  if (creditTo) {
+    const who = book.customers.find((c) => c.id === creditTo.customerId)!;
+    const t = trustLabel(book.debts, who.id, book.overrides[who.id]);
+    const check = creditLimitCheck(book.debts.balances.get(who.id)?.owedKobo ?? 0, creditTo.amountKobo, who.creditLimitKobo, t.suggestedLimitKobo);
+    if (check.over && check.limitKobo !== null)
+      limitWarning = `${who.name} would owe ${formatNaira(check.afterKobo)}, above ${check.source === "owner" ? "your limit" : "Trustbook's suggested limit"} of ${formatNaira(check.limitKobo)}. You can still save it.`;
+  }
   const ready = draft.questions.length === 0 && (draft.entries.length > 0 || draft.newCustomers.length > 0);
   const token = ready ? signDraft({ shopId: book.shop.id, entries: draft.entries, newCustomers: draft.newCustomers, newItems: draft.newItems }) : "";
 
@@ -84,6 +92,12 @@ export default async function RecordPage({ searchParams }: { searchParams: Promi
           </div>
         )}
       </div>
+      {limitWarning && (
+        <div role="alert" className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-900">
+          <div className="font-semibold">Over the credit limit</div>
+          <p className="mt-1">{limitWarning}</p>
+        </div>
+      )}
       {creditTo && (
         <Suspense fallback={<AdviceLoading />}>
           <CreditAdvice book={book} customerId={creditTo.customerId} amountKobo={creditTo.amountKobo} />

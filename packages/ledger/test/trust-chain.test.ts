@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildDayRecord, canonicalize, normalizeLabel, computeDebts, effectiveEntries, entriesRecordedOn, GENESIS, hashRecord, trustLabel, verifyChain, verifyRecord, type DayRecord, type Entry } from "../src/index";
+import { buildDayRecord, canonicalize, creditLimitCheck, normalizeLabel, computeDebts, effectiveEntries, entriesRecordedOn, GENESIS, hashRecord, trustLabel, verifyChain, verifyRecord, type DayRecord, type Entry } from "../src/index";
 import { correction, payment, promise, sale, settings, SHOP } from "./fixtures";
 
 const label = (entries: Entry[], asOf: string, customerId = "c1") => trustLabel(computeDebts(effectiveEntries(entries), settings, asOf), customerId);
@@ -169,5 +169,15 @@ describe("five ratings (approved 7 Nov)", () => {
     expect(normalizeLabel("New")).toBe("Insufficient history");
     expect(normalizeLabel("Excellent payer")).toBe("Excellent payer");
     expect(normalizeLabel(null)).toBeUndefined();
+  });
+});
+
+describe("credit limit check (warning only)", () => {
+  it("uses the owner's limit before the suggestion", () => {
+    expect(creditLimitCheck(10_000_00, 15_000_00, 20_000_00, 5_000_00)).toEqual({ limitKobo: 20_000_00, source: "owner", afterKobo: 25_000_00, over: true });
+  });
+  it("falls back to the suggested limit, and says when there is none", () => {
+    expect(creditLimitCheck(0, 4_000_00, null, 5_000_00)).toMatchObject({ source: "suggested", over: false });
+    expect(creditLimitCheck(0, 4_000_00, null, null)).toEqual({ limitKobo: null, source: null, afterKobo: 4_000_00, over: false });
   });
 });

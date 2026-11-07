@@ -8,14 +8,14 @@ import { CopyLink } from "../../../../src/ui/copy-link";
 import { PIN_MESSAGES, pinRequired } from "../../../../src/lib/pin";
 import { PayQr } from "../../../../src/ui/qr";
 import { payLine } from "../../../../src/lib/reminder";
-import { markAsPaid, setLabel, setPromise, updateContact } from "./actions";
+import { markAsPaid, setCreditLimit, setLabel, setPromise, updateContact } from "./actions";
 import { EntryLine } from "../../../../src/ui/entry-line";
 import { LabelBadge, Section, shortDate, Stat } from "../../../../src/ui/kit";
 
 /** One customer: what they owe, how they pay, and their full history. */
-export default async function CustomerPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ paid?: string; error?: string; label?: string; contact?: string; promise?: string }> }) {
+export default async function CustomerPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ limit?: string; paid?: string; error?: string; label?: string; contact?: string; promise?: string }> }) {
   const { id } = await params;
-  const { paid, error, label: labelSaved, contact, promise } = await searchParams;
+  const { paid, error, label: labelSaved, contact, promise, limit: limitMsg } = await searchParams;
   const book = await loadBook();
   const customer = book.customers.find((c) => c.id === id);
   if (!customer) notFound();
@@ -156,6 +156,34 @@ export default async function CustomerPage({ params, searchParams }: { params: P
             ))}
           </ul>
         )}
+      </Section>
+
+      <Section title="Credit limit">
+        <div id="limit" className="scroll-mt-24 rounded-xl border border-stone-200 bg-white p-4">
+          <p className="text-stone-700">
+            {customer.creditLimitKobo != null
+              ? `Your limit for ${customer.name}: ${formatNaira(customer.creditLimitKobo)}.`
+              : trust.suggestedLimitKobo != null
+                ? `No limit set. Trustbook suggests ${formatNaira(trust.suggestedLimitKobo)}: the usual amount ${customer.name} has paid back in full.`
+                : "No limit set."}{" "}
+            You get a warning if new credit would go over it. You still decide.
+          </p>
+          {limitMsg === "saved" && <p className="mt-2 text-sm text-emerald-800">Limit saved.</p>}
+          {limitMsg === "bad" && <p className="mt-2 text-sm text-red-700">Write the amount like 20,000 or 20k.</p>}
+          <form action={setCreditLimit} className="mt-3 flex gap-2">
+            <input type="hidden" name="customerId" value={id} />
+            <input
+              name="limit"
+              inputMode="decimal"
+              defaultValue={customer.creditLimitKobo != null ? String(customer.creditLimitKobo / 100) : ""}
+              placeholder={trust.suggestedLimitKobo != null ? String(trust.suggestedLimitKobo / 100) : "20,000"}
+              aria-label="Credit limit in naira (leave empty for none)"
+              className="min-w-0 flex-1 rounded-xl border border-stone-300 px-3 py-2"
+            />
+            <button type="submit" className="rounded-xl border border-stone-400 px-4 py-2 font-semibold">Save</button>
+          </form>
+          <p className="mt-1 text-xs text-stone-500">Leave empty and save to remove the limit.</p>
+        </div>
       </Section>
 
       <Section title="Label">

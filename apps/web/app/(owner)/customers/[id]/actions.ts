@@ -12,6 +12,20 @@ import { checkPin } from "../../../../src/lib/pin";
 import { queueLabelOverride, queueMemoriesForSaved } from "../../../../src/memory/events";
 import { processOutbox } from "../../../../src/memory/outbox";
 
+const LimitForm = z.object({ customerId: z.string().min(1).max(64), limit: z.string().max(30) });
+
+/** Sets or clears a customer's credit limit. A warning on the record card, never a block. */
+export async function setCreditLimit(formData: FormData): Promise<void> {
+  const book = await loadBook();
+  const f = LimitForm.parse({ customerId: formData.get("customerId"), limit: formData.get("limit") ?? "" });
+  if (!book.customers.some((c) => c.id === f.customerId)) redirect("/customers");
+  const raw = f.limit.trim();
+  const kobo = raw === "" ? null : parseNairaToKobo(raw);
+  if (raw !== "" && !kobo) redirect(`/customers/${f.customerId}?limit=bad#limit`);
+  await db.update(schema.customers).set({ creditLimitKobo: kobo }).where(and(eq(schema.customers.id, f.customerId), eq(schema.customers.shopId, book.shop.id)));
+  redirect(`/customers/${f.customerId}?limit=saved#limit`);
+}
+
 const Form = z.object({
   customerId: z.string().min(1),
   amount: z.string().min(1),

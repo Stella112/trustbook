@@ -67,6 +67,8 @@ export const customers = pgTable(
     /** Owner's manual trust label, if set. Also written to behaviour memory in Phase 3. */
     // Plain text: rows saved before 7 Nov hold old names, read through normalizeLabel.
     labelOverride: text("label_override"),
+    /** Owner-set credit limit in kobo (null = none set). A warning, never a block: the owner decides. */
+    creditLimitKobo: bigint("credit_limit_kobo", { mode: "number" }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("customers_shop_idx").on(t.shopId)],

@@ -1,5 +1,6 @@
 import {
   capitalReport,
+  creditLimitCheck,
   customerRows,
   monthRange,
   parseNairaToKobo,
@@ -75,7 +76,8 @@ export interface AskContext {
   settings: ShopSettings;
   today: string;
   debts: DebtState;
-  customers: Known[];
+  /** creditLimitKobo: the owner's own limit, if set. */
+  customers: (Known & { creditLimitKobo?: number | null })[];
   /** Product names for best-seller answers; falls back to the item id. */
   itemName?: (id: string) => string;
 }
@@ -252,8 +254,9 @@ export function answer(intent: Intent, ctx: AskContext): Answer {
       const reasons: string[] = [];
       if (overdue > 0) reasons.push(`${formatNaira(overdue)} is already overdue`);
       if (t.label === "High risk") reasons.push(`they are rated ${t.label}`);
-      if (ask && t.suggestedLimitKobo !== null && owed + ask > t.suggestedLimitKobo)
-        reasons.push(`that would bring them to ${formatNaira(owed + ask)}, above the suggested limit of ${formatNaira(t.suggestedLimitKobo)}`);
+      const check = creditLimitCheck(owed, ask ?? 0, ctx.customers.find((c) => c.id === r.customer!.id)?.creditLimitKobo, t.suggestedLimitKobo);
+      if (ask && check.over)
+        reasons.push(`that would bring them to ${formatNaira(check.afterKobo)}, above ${check.source === "owner" ? "your limit" : "the suggested limit"} of ${formatNaira(check.limitKobo!)}`);
       const amountText = ask ? `${formatNaira(ask)} credit` : "credit";
       const advice = reasons.length
         ? `Be careful giving ${r.customer.name} ${amountText}: ${reasons.join("; ")}. Ask for part payment first, or give a smaller amount.`
@@ -266,7 +269,7 @@ export function answer(intent: Intent, ctx: AskContext): Answer {
           { label: "Owes now", value: formatNaira(owed) },
           { label: "Overdue", value: formatNaira(overdue) },
           { label: "Rating", value: t.label },
-          ...(t.suggestedLimitKobo !== null ? [{ label: "Suggested limit", value: formatNaira(t.suggestedLimitKobo) }] : []),
+          ...(check.limitKobo !== null ? [{ label: check.source === "owner" ? "Your limit" : "Suggested limit", value: formatNaira(check.limitKobo) }] : []),
         ],
       };
     }

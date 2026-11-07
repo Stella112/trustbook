@@ -92,3 +92,23 @@ function medianRepaid(debts: Debt[]): number | null {
   const repaid = debts.filter((d) => d.settledDate !== undefined).map((d) => d.creditKobo);
   return repaid.length ? median(repaid) : null;
 }
+
+export interface CreditLimitCheck {
+  /** The limit used: the owner's own, else Trustbook's suggestion, else none. */
+  limitKobo: number | null;
+  source: "owner" | "suggested" | null;
+  /** What the customer would owe after this credit. */
+  afterKobo: number;
+  over: boolean;
+}
+
+/**
+ * Checks new credit against a customer's limit. A warning only: the owner always decides. The
+ * owner's limit wins; without one, Trustbook's cautious suggestion is used if there is one.
+ */
+export function creditLimitCheck(owedKobo: number, newCreditKobo: number, ownerLimitKobo: number | null | undefined, suggestedKobo: number | null): CreditLimitCheck {
+  const afterKobo = owedKobo + newCreditKobo;
+  const limitKobo = ownerLimitKobo ?? suggestedKobo;
+  const source = ownerLimitKobo != null ? "owner" : suggestedKobo != null ? "suggested" : null;
+  return { limitKobo: limitKobo ?? null, source, afterKobo, over: limitKobo != null && afterKobo > limitKobo };
+}
