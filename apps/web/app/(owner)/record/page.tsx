@@ -120,6 +120,7 @@ function NoteBox({ note, message }: { note: string; message?: string }) {
       {message && <p className="mb-2 text-stone-700">{message}</p>}
       <form action="/record" method="get">
         <textarea
+          key={note}
           name="text"
           defaultValue={note}
           required
@@ -132,7 +133,8 @@ function NoteBox({ note, message }: { note: string; message?: string }) {
           Read it
         </button>
       </form>
-      <VoiceButton />
+      {/* Keyed by the note so the button resets when a voice note opens this same page with new text. */}
+      <VoiceButton key={note} />
     </div>
   );
 }

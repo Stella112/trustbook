@@ -9,11 +9,39 @@ export const KINDS = ["record_sale", "record_payment", "record_purchase", "recor
 const Item = z.object({
   name: z.string().min(1),
   qty: z.string().min(1),
+  /** False when the note gave no quantity and 1 was assumed, so the card can say so. */
+  qtyGiven: z.boolean().optional(),
   unitPrice: z.string().optional(),
   lineTotal: z.string().optional(),
 });
 
-export const Proposal = z.object({
+/**
+ * Models leave optional fields as null or "" (seen live on 7 Nov: `gemini-3.5-flash` returned
+ * qty "" for "Eggs 3,000, bread 2,000"), which used to fail the whole note. Blank optional fields
+ * are dropped, and a missing quantity becomes 1 with the price taken as that line's total.
+ */
+function tidy(raw: unknown): unknown {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return raw;
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(raw)) if (v !== null && v !== "") out[k] = v;
+  if (Array.isArray(out.items)) {
+    out.items = out.items
+      .filter((i): i is Record<string, unknown> => !!i && typeof i === "object")
+      .map((i) => {
+        const item: Record<string, unknown> = {};
+        for (const [k, v] of Object.entries(i)) if (v !== null && v !== "") item[k] = v;
+        if (item.qty === undefined) {
+          item.qty = "1";
+          item.qtyGiven = false;
+          if (item.unitPrice !== undefined && item.lineTotal === undefined) [item.lineTotal, item.unitPrice] = [item.unitPrice, undefined];
+        }
+        return item;
+      });
+  }
+  return out;
+}
+
+export const Proposal = z.preprocess(tidy, z.object({
   kind: z.enum(KINDS),
   customerName: z.string().optional(),
   items: z.array(Item).optional(),
@@ -31,7 +59,7 @@ export const Proposal = z.object({
   phone: z.string().optional(),
   question: z.string().optional(),
   clarifications: z.array(z.string()).default([]),
-});
+}));
 export type Proposal = z.infer<typeof Proposal>;
 
 /** The same shape as JSON Schema for Gemini's structured output. */

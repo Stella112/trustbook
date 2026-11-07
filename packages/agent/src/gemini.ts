@@ -117,6 +117,10 @@ export async function parseNote(note: string, ctx: ParseContext): Promise<Propos
   ].join("\n");
   const raw = await generateJson(prompt, proposalJsonSchema, INSTRUCTIONS);
   const parsed = Proposal.safeParse(raw);
-  if (!parsed.success) return { kind: "unclear", clarifications: ["I could not read that clearly. Please say it another way."] };
+  if (!parsed.success) {
+    // Logged so a format mismatch shows up in the server logs instead of only as "could not read".
+    console.error("parseNote: model reply failed validation", JSON.stringify(parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`)));
+    return { kind: "unclear", clarifications: ["I could not read that clearly. Please say it another way."] };
+  }
   return parsed.data;
 }

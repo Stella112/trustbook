@@ -121,3 +121,21 @@ describe("building payments, promises and expenses", () => {
     expect(d.entries[0]).toMatchObject({ type: "PURCHASE", totalKobo: 3_800_000, paidNowKobo: 2_000_000, supplier: "Alhaji", items: [{ itemId: "eggs", qty: 10, unitCostKobo: 380_000 }] });
   });
 });
+
+describe("tolerating blank fields from the model (seen live 7 Nov)", () => {
+  it("accepts an empty quantity as 1 at the stated price and says so", () => {
+    const raw = { kind: "record_sale", customerName: "Ugochukwu", items: [{ name: "eggs", qty: "", lineTotal: "3,000" }, { name: "bread", qty: "", lineTotal: "2,000" }], total: "5,000", onCredit: true, promiseDatePhrase: null, clarifications: [] };
+    const p = Proposal.parse(raw);
+    const d = buildDraft(p, ctx());
+    expect(d.questions).toEqual([]);
+    expect(d.entries[0]).toMatchObject({ totalKobo: 500_000, paidNowKobo: 0 });
+    expect(d.notes.filter((n) => n.startsWith("Quantity not given"))).toHaveLength(2);
+  });
+  it("treats a lone unit price with no quantity as the line total", () => {
+    const p = Proposal.parse({ kind: "record_sale", items: [{ name: "rice", unitPrice: "85k" }], paidInFull: true, clarifications: [] });
+    expect(buildDraft(p, ctx()).entries[0]).toMatchObject({ totalKobo: 8_500_000 });
+  });
+  it("drops null optional fields instead of failing", () => {
+    expect(Proposal.safeParse({ kind: "record_payment", customerName: "Tunde", amount: "5k", method: null, items: null, clarifications: [] }).success).toBe(true);
+  });
+});

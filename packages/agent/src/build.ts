@@ -159,6 +159,7 @@ export function buildDraft(p: Proposal, ctx: BuildContext): Draft {
         d.questions.push(`What is the ${kind} of ${line.name}?`);
         continue;
       }
+      if (line.qtyGiven === false) d.notes.push(`Quantity not given for ${known.name}; counted as 1 at ${formatNaira(unit)}. Tap Change if that is wrong.`);
       out.push({ itemId: known.id, name: known.name, qty, unitKobo: unit });
       void i;
     }
