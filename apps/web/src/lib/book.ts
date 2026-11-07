@@ -5,14 +5,13 @@ import { cache } from "react";
 import { db, schema } from "../db/client";
 import { currentShop } from "./shop";
 
+type Shop = typeof schema.shops.$inferSelect;
+
 /**
- * Everything an owner screen needs: the signed-in shop, its validated ledger, customers and items.
- * Cached per request so a page and its layout share one database read.
+ * A shop's validated ledger, customers and items, and the debts computed from them. Used by the app
+ * (for the signed-in shop) and by the Telegram bot (for the shop linked to a chat).
  */
-export const loadBook = cache(async () => {
-  const shop = await currentShop();
-  // Signed-out visitors on an app screen are asked to sign in.
-  if (!shop) redirect("/login");
+export async function bookForShop(shop: Shop) {
   const [rows, customers, items] = await Promise.all([
     db.select({ data: schema.entries.data }).from(schema.entries).where(eq(schema.entries.shopId, shop.id)).orderBy(asc(schema.entries.occurredAt)),
     db.select().from(schema.customers).where(eq(schema.customers.shopId, shop.id)).orderBy(asc(schema.customers.name)),
@@ -35,6 +34,17 @@ export const loadBook = cache(async () => {
     customerName: (id: string | undefined) => customers.find((c) => c.id === id)?.name ?? "Unknown customer",
     itemName: (id: string) => items.find((i) => i.id === id)?.name ?? id,
   };
+}
+
+/**
+ * Everything an owner screen needs, for the signed-in shop. Cached per request so a page and its
+ * layout share one database read.
+ */
+export const loadBook = cache(async () => {
+  const shop = await currentShop();
+  // Signed-out visitors on an app screen are asked to sign in.
+  if (!shop) redirect("/login");
+  return bookForShop(shop);
 });
 
-export type Book = Awaited<ReturnType<typeof loadBook>>;
+export type Book = Awaited<ReturnType<typeof bookForShop>>;

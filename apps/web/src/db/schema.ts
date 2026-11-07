@@ -50,6 +50,8 @@ export const shops = pgTable("shops", {
   /** The shop's HeadAnchor on Sui and the AnchorCap held by the server key (brief §6.8a). */
   anchorObjectId: text("anchor_object_id"),
   anchorCapId: text("anchor_cap_id"),
+  /** The Telegram chat linked to this shop (approved 7 Nov: Trustbook on Telegram); one chat per shop. */
+  telegramChatId: text("telegram_chat_id").unique(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -210,3 +212,23 @@ export const entries = pgTable(
     index("entries_customer_idx").on(t.shopId, t.customerId),
   ],
 );
+
+/** One-time codes that link a Telegram chat to a shop: only a hash is stored; each lasts 15 minutes. */
+export const telegramLinkCodes = pgTable("telegram_link_codes", {
+  codeHash: text("code_hash").primaryKey(),
+  shopId: text("shop_id").notNull().references(() => shops.id),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+});
+
+/**
+ * Confirmation cards sent in Telegram. A button can carry only 64 bytes, so it carries this row's id;
+ * the row holds the signed card. A card is used once.
+ */
+export const telegramCards = pgTable("telegram_cards", {
+  id: text("id").primaryKey(),
+  shopId: text("shop_id").notNull().references(() => shops.id),
+  chatId: text("chat_id").notNull(),
+  token: text("token").notNull(),
+  usedAt: timestamp("used_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});

@@ -3,6 +3,7 @@ import { currentOwner } from "../../../src/lib/owner";
 import { Section } from "../../../src/ui/kit";
 import { signOut } from "../actions";
 import { AddressForm } from "./address-form";
+import { TelegramConnect } from "./telegram-connect";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +34,16 @@ export default async function SettingsPage() {
               <p className="mt-1 break-all font-mono text-sm">{shop.suiAddress ?? "no address set"}</p>
               <p className="mt-2 text-sm text-stone-600">The demo shop&apos;s address cannot be changed here. Create your own account to run a real shop.</p>
             </>
+          )}
+        </div>
+      </Section>
+
+      <Section title="Trustbook on Telegram">
+        <div className="rounded-xl border border-stone-200 bg-white p-4">
+          {live ? (
+            <TelegramConnect linked={Boolean(shop.telegramChatId)} />
+          ) : (
+            <p className="text-stone-700">Create your own account to use Trustbook from Telegram. The demo shop cannot be linked, since anyone can open it.</p>
           )}
         </div>
       </Section>
