@@ -7,19 +7,20 @@ import { appUrl, signPayLink, whatsappLink } from "../../../../src/lib/paylink";
 import { CopyLink } from "../../../../src/ui/copy-link";
 import { PIN_MESSAGES, pinRequired } from "../../../../src/lib/pin";
 import { PayQr } from "../../../../src/ui/qr";
-import { markAsPaid } from "./actions";
+import { markAsPaid, setLabel } from "./actions";
 import { EntryLine } from "../../../../src/ui/entry-line";
 import { LabelBadge, Section, shortDate, Stat } from "../../../../src/ui/kit";
 
 /** One customer: what they owe, how they pay, and their full history. */
-export default async function CustomerPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ paid?: string; error?: string }> }) {
+export default async function CustomerPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ paid?: string; error?: string; label?: string }> }) {
   const { id } = await params;
-  const { paid, error } = await searchParams;
+  const { paid, error, label: labelSaved } = await searchParams;
   const book = await loadBook();
   const customer = book.customers.find((c) => c.id === id);
   if (!customer) notFound();
   const balance = book.debts.balances.get(id);
   const trust = trustLabel(book.debts, id, book.overrides[id]);
+  const automatic = trustLabel(book.debts, id);
   const open = book.debts.debts.filter((d) => d.customerId === id && d.openKobo > 0);
   const history = customerHistory(book.entries, id);
   const owed = balance?.owedKobo ?? 0;
@@ -110,6 +111,29 @@ export default async function CustomerPage({ params, searchParams }: { params: P
             ))}
           </ul>
         )}
+      </Section>
+
+      <Section title="Label">
+        <details className="rounded-xl bg-white p-4 shadow-sm" open={!!labelSaved}>
+          <summary className="cursor-pointer font-medium">
+            {trust.overridden ? `You set this label. The rules say: ${automatic.label}.` : `Set by the rules: ${automatic.label}. Change it?`}
+          </summary>
+          {labelSaved && <p className="mt-2 text-sm text-emerald-800">Label saved and remembered on Walrus.</p>}
+          <form action={setLabel} className="mt-3 space-y-2">
+            <input type="hidden" name="customerId" value={id} />
+            <select name="label" defaultValue={customer.labelOverride ?? "auto"} className="block w-full rounded-xl border border-stone-300 bg-white px-3 py-2">
+              <option value="auto">Use the rules ({automatic.label})</option>
+              <option value="Good payer">Good payer</option>
+              <option value="Sometimes late">Sometimes late</option>
+              <option value="Careful">Careful</option>
+              <option value="New">New</option>
+            </select>
+            <input name="reason" maxLength={120} placeholder="Why? (optional) e.g. paid me in cash before" className="block w-full rounded-xl border border-stone-300 px-3 py-2" />
+            <button type="submit" className="w-full rounded-xl border border-stone-400 px-4 py-2 font-semibold">
+              Save label
+            </button>
+          </form>
+        </details>
       </Section>
 
       <Section title="History">

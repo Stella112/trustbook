@@ -52,10 +52,11 @@ export async function importRecovered(books: RecoveredBooks, memories: Recovered
   });
 
   // The owner's latest label override, if any, is remembered on Walrus (brief §6.2).
-  const overrides = new Map<string, { at: string; label: string }>();
+  // `label: null` is the owner handing the label back to the automatic rules; the latest wins either way.
+  const overrides = new Map<string, { at: string; label: string | null }>();
   for (const m of memories) {
-    const j = JSON.parse(m.text) as { kind?: string; customerId?: string; occurredAt?: string; label?: string };
-    if (j.kind !== "label_override" || !j.customerId || !j.label || !j.occurredAt) continue;
+    const j = JSON.parse(m.text) as { kind?: string; customerId?: string; occurredAt?: string; label?: string | null };
+    if (j.kind !== "label_override" || !j.customerId || j.label === undefined || !j.occurredAt) continue;
     const prev = overrides.get(j.customerId);
     if (!prev || prev.at < j.occurredAt) overrides.set(j.customerId, { at: j.occurredAt, label: j.label });
   }

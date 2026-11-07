@@ -1,6 +1,6 @@
 import type { Entry } from "@trustbook/ledger";
 import { describe, expect, it } from "vitest";
-import { brokenPromiseEvents, dedupeKeyFor, eventsForNewEntries, parseMemory, recallNamespaces } from "../src/events";
+import { brokenPromiseEvents, dedupeKeyFor, eventsForNewEntries, labelOverrideEvent, parseMemory, recallNamespaces } from "../src/events";
 
 const settings = { shopId: "s1", timezone: "Africa/Lagos", openingCashKobo: 0, defaultDueDays: 14 };
 const ctx = { shopId: "s1", settings, today: "2026-11-06", demo: false, customerName: (id: string) => ({ c1: "Tunde" })[id] ?? id };
@@ -77,5 +77,17 @@ describe("dedupe keys of recovered memories", () => {
   it("returns null for a memory it cannot place", () => {
     expect(dedupeKeyFor('{"v":1,"kind":"payment","customerId":"c1","occurredAt":"2026-01-01T00:00:00Z","amountKobo":1}', [], settings, ctx.today)).toBeNull();
     expect(dedupeKeyFor("not json", [], settings, ctx.today)).toBeNull();
+  });
+});
+
+describe("owner label overrides", () => {
+  it("remembers a label the owner sets, with the reason", () => {
+    const e = labelOverrideEvent(ctx, "c1", "Good payer", "2026-11-07T10:00:00+01:00", "paid me in cash before");
+    expect(JSON.parse(e.content)).toMatchObject({ kind: "label_override", customerId: "c1", label: "Good payer", reason: "paid me in cash before", summary: "The owner set Tunde's label to Good payer: paid me in cash before." });
+    expect(e.namespace).toBe("trustbook:s1:behaviour:2026-11");
+  });
+  it("remembers handing the label back to the rules as label null", () => {
+    const e = labelOverrideEvent(ctx, "c1", null, "2026-11-08T10:00:00+01:00");
+    expect(JSON.parse(e.content)).toMatchObject({ label: null, summary: "The owner returned Tunde's label to automatic." });
   });
 });

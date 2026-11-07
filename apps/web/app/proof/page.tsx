@@ -105,6 +105,12 @@ export default async function ProofPage() {
           A memory counts only after Walrus confirms the write and returns a blob ID. {count("confirmed", false)} are from live shops, {count("confirmed", true)} are demo data.
           Waiting: {count("pending") + count("submitted")} · failed: {count("failed")}.
         </p>
+        {count("held") + count("summarized") > 0 && (
+          <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
+            A month reached 90 memories, so single events are now saved as weekly summaries per customer, keeping each month under Walrus Memory&apos;s 100-record
+            restore limit. Held for this week&apos;s summary: {count("held")} · already summarised: {count("summarized")}.
+          </p>
+        )}
         <ul className="mt-3 divide-y divide-stone-200 rounded-xl bg-white shadow-sm">
           {recent.map((r) => (
             <li key={r.blobId} className="px-4 py-3 text-sm">

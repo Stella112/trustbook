@@ -1,4 +1,5 @@
-import { brokenPromiseEvents, eventsForNewEntries } from "@trustbook/memory";
+import { brokenPromiseEvents, eventsForNewEntries, labelOverrideEvent } from "@trustbook/memory";
+import type { TrustLabel } from "@trustbook/ledger";
 import { localDate, validateEntry, type Entry } from "@trustbook/ledger";
 import { asc, eq } from "drizzle-orm";
 import { db, schema } from "../db/client";
@@ -36,4 +37,10 @@ export async function queueMemoriesForSaved(shop: Shop, saved: Entry[]): Promise
 export async function queueBrokenPromises(shop: Shop): Promise<number> {
   const { entries, ctx } = await shopContext(shop);
   return enqueue(shop.id, ctx.demo, brokenPromiseEvents(entries, ctx));
+}
+
+/** Remembers the owner setting (or clearing, with `null`) a customer's label (brief §6.2). */
+export async function queueLabelOverride(shop: Shop, customerId: string, label: TrustLabel | null, reason?: string): Promise<number> {
+  const { ctx } = await shopContext(shop);
+  return enqueue(shop.id, ctx.demo, [labelOverrideEvent(ctx, customerId, label, new Date().toISOString(), reason)]);
 }

@@ -5,10 +5,11 @@ import { redirect } from "next/navigation";
 import { after } from "next/server";
 import { ulid } from "ulid";
 import { z } from "zod";
+import { and, eq } from "drizzle-orm";
 import { db, schema } from "../../../../src/db/client";
 import { loadBook } from "../../../../src/lib/book";
 import { checkPin } from "../../../../src/lib/pin";
-import { queueMemoriesForSaved } from "../../../../src/memory/events";
+import { queueLabelOverride, queueMemoriesForSaved } from "../../../../src/memory/events";
 import { processOutbox } from "../../../../src/memory/outbox";
 
 const Form = z.object({
@@ -52,4 +53,27 @@ export async function markAsPaid(formData: FormData): Promise<void> {
     }
   });
   redirect(`/customers/${f.customerId}?paid=1`);
+}
+
+const LabelForm = z.object({
+  customerId: z.string().min(1),
+  label: z.enum(["auto", "New", "Good payer", "Sometimes late", "Careful"]),
+  reason: z.string().trim().max(120).optional(),
+});
+
+/**
+ * The owner overrides a customer's trust label, or hands it back to the rules (brief §6.2). Stored as
+ * a DB flag and remembered on Walrus, so it survives a database wipe and shows in the advice.
+ */
+export async function setLabel(formData: FormData): Promise<void> {
+  const book = await loadBook();
+  const f = LabelForm.parse({ customerId: formData.get("customerId"), label: formData.get("label"), reason: formData.get("reason") || undefined });
+  const customer = book.customers.find((c) => c.id === f.customerId);
+  if (!customer) redirect("/customers");
+  const label = f.label === "auto" ? null : f.label;
+  if ((customer.labelOverride ?? null) === label) redirect(`/customers/${f.customerId}`);
+  await db.update(schema.customers).set({ labelOverride: label }).where(and(eq(schema.customers.id, f.customerId), eq(schema.customers.shopId, book.shop.id)));
+  await queueLabelOverride(book.shop, f.customerId, label, label ? f.reason : undefined);
+  after(() => processOutbox().catch((err) => console.error("memory outbox:", err)));
+  redirect(`/customers/${f.customerId}?label=1`);
 }

@@ -1,6 +1,8 @@
 import { daySummary, entriesOn, formatNaira, promisesDueOn } from "@trustbook/ledger";
 import Link from "next/link";
+import { Suspense } from "react";
 import { loadBook } from "../../src/lib/book";
+import { LessonTip } from "../../src/ui/lesson-tip";
 import { EntryLine } from "../../src/ui/entry-line";
 import { Section, shortDate, Stat } from "../../src/ui/kit";
 
@@ -29,6 +31,11 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
         <Stat label="Money collected" value={formatNaira(day.cashCollectedKobo)} tone="good" />
         <Stat label="Spent" value={formatNaira(day.expensesKobo + day.purchasesKobo)} note="Stock and expenses" />
       </section>
+
+      {/* Streams in after the page: recall from Walrus takes a few seconds and must not hold up Today. */}
+      <Suspense fallback={null}>
+        <LessonTip book={book} />
+      </Suspense>
 
       <Section title="Record something">
         <form action="/record" method="get" className="flex gap-2">

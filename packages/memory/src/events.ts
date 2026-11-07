@@ -15,7 +15,7 @@ import {
  * Behaviour memories (brief §6.3). Pure: decides WHAT to remember from ledger changes; the outbox
  * and the Walrus client decide how and when it is written.
  */
-export type MemoryKind = "credit" | "payment" | "promise_made" | "promise_kept" | "promise_broken" | "label_change" | "label_override" | "month_lesson";
+export type MemoryKind = "credit" | "payment" | "promise_made" | "promise_kept" | "promise_broken" | "label_change" | "label_override" | "month_lesson" | "week_summary";
 
 export interface MemoryEvent {
   kind: MemoryKind;
@@ -133,8 +133,13 @@ export function brokenPromiseEvents(entries: readonly Entry[], ctx: Ctx): Memory
 }
 
 /** The owner overriding a label (brief §6.2). */
-export function labelOverrideEvent(ctx: Ctx, customerId: string, label: TrustLabel, occurredAt: string): MemoryEvent {
-  return make(ctx, "label_override", occurredAt, `override:${customerId}:${occurredAt}`, { label }, `The owner set ${ctx.customerName(customerId)}'s label to ${label}.`, customerId);
+export function labelOverrideEvent(ctx: Ctx, customerId: string, label: TrustLabel | null, occurredAt: string, reason?: string): MemoryEvent {
+  // `label: null` means the owner handed the label back to the automatic rules.
+  const summary =
+    label === null
+      ? `The owner returned ${ctx.customerName(customerId)}'s label to automatic.`
+      : `The owner set ${ctx.customerName(customerId)}'s label to ${label}${reason ? `: ${reason}` : ""}.`;
+  return make(ctx, "label_override", occurredAt, `override:${customerId}:${occurredAt}`, { label, ...(reason ? { reason } : {}) }, summary, customerId);
 }
 
 /** A closed month's lesson (brief §6.7). Text is built from computed numbers, never by a model. */
@@ -192,6 +197,8 @@ export function dedupeKeyFor(text: string, entries: readonly Entry[], settings: 
       return j.month ? `lesson:${j.month}` : null;
     case "label_override":
       return j.customerId && j.occurredAt ? `override:${j.customerId}:${j.occurredAt}` : null;
+    case "week_summary":
+      return j.customerId && (j as { weekStart?: string }).weekStart && j.month ? `week:${j.customerId}:${(j as { weekStart?: string }).weekStart}:${j.month}` : null;
     default:
       return null;
   }

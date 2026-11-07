@@ -158,7 +158,7 @@ export const outbox = pgTable(
     content: text("content").notNull(),
     occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),
     demo: boolean("demo").notNull().default(false),
-    status: text("status", { enum: ["pending", "submitted", "confirmed", "failed"] }).notNull().default("pending"),
+    status: text("status", { enum: ["pending", "submitted", "confirmed", "failed", "held", "summarized"] }).notNull().default("pending"),
     attempts: integer("attempts").notNull().default(0),
     nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }).notNull().defaultNow(),
     jobId: text("job_id"),
