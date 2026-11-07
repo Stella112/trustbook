@@ -24,10 +24,11 @@ export function Section({ title, children, action }: { title: string; children: 
 }
 
 const LABEL_STYLE: Record<TrustLabel, string> = {
-  "Good payer": "bg-emerald-100 text-emerald-900",
+  "Excellent payer": "bg-emerald-700 text-white",
+  "Reliable payer": "bg-emerald-100 text-emerald-900",
   "Sometimes late": "bg-amber-100 text-amber-900",
-  Careful: "bg-red-100 text-red-900",
-  New: "bg-stone-200 text-stone-800",
+  "High risk": "bg-red-100 text-red-900",
+  "Insufficient history": "bg-stone-200 text-stone-800",
 };
 
 export function LabelBadge({ label, overridden }: { label: TrustLabel; overridden?: boolean }) {

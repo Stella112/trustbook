@@ -2,10 +2,11 @@ import { trustLabel, type DebtState, type TrustLabel } from "@trustbook/ledger";
 import { parseMemory, recallMemories, recallNamespaces } from "@trustbook/memory";
 
 export const ADVICE: Record<TrustLabel, string> = {
-  Careful: "Be careful giving more credit.",
+  "High risk": "Be careful giving more credit. Ask for part payment first.",
   "Sometimes late": "Credit is okay in small amounts.",
-  "Good payer": "Safe to give credit.",
-  New: "Not enough history yet. Start small.",
+  "Reliable payer": "Safe to give credit.",
+  "Excellent payer": "Pays on time every time. Safe to give credit.",
+  "Insufficient history": "Not enough history yet. Start small.",
 };
 
 export interface Advice {

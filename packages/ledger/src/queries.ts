@@ -41,7 +41,7 @@ export interface CustomerRow {
   trust: TrustResult;
 }
 
-const LABEL_RANK: Record<TrustLabel, number> = { Careful: 0, "Sometimes late": 1, New: 2, "Good payer": 3 };
+const LABEL_RANK: Record<TrustLabel, number> = { "High risk": 0, "Sometimes late": 1, "Insufficient history": 2, "Reliable payer": 3, "Excellent payer": 4 };
 
 /** Every customer with balance and label, most owed first, then riskiest label first. */
 export function customerRows(state: DebtState, customerIds: readonly string[], overrides: Record<string, TrustLabel | undefined> = {}): CustomerRow[] {

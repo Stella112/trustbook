@@ -1,4 +1,4 @@
-import { customerHistory, formatNaira, trustLabel } from "@trustbook/ledger";
+import { customerHistory, formatNaira, normalizeLabel, TRUST_LABELS, trustLabel } from "@trustbook/ledger";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { AdviceLoading, CreditAdvice } from "../../../../src/ui/credit-advice";
@@ -166,12 +166,11 @@ export default async function CustomerPage({ params, searchParams }: { params: P
           {labelSaved && <p className="mt-2 text-sm text-emerald-800">Label saved and remembered on Walrus.</p>}
           <form action={setLabel} className="mt-3 space-y-2">
             <input type="hidden" name="customerId" value={id} />
-            <select name="label" defaultValue={customer.labelOverride ?? "auto"} className="block w-full rounded-xl border border-stone-300 bg-white px-3 py-2">
+            <select name="label" defaultValue={normalizeLabel(customer.labelOverride) ?? "auto"} className="block w-full rounded-xl border border-stone-300 bg-white px-3 py-2">
               <option value="auto">Use the rules ({automatic.label})</option>
-              <option value="Good payer">Good payer</option>
-              <option value="Sometimes late">Sometimes late</option>
-              <option value="Careful">Careful</option>
-              <option value="New">New</option>
+              {TRUST_LABELS.map((l) => (
+                <option key={l} value={l}>{l}</option>
+              ))}
             </select>
             <input name="reason" maxLength={120} placeholder="Why? (optional) e.g. paid me in cash before" className="block w-full rounded-xl border border-stone-300 px-3 py-2" />
             <button type="submit" className="w-full rounded-xl border border-stone-400 px-4 py-2 font-semibold">

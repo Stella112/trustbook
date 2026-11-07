@@ -1,7 +1,19 @@
 import { addDays, daysBetween } from "./dates";
 import type { Debt, DebtState } from "./debts";
 
-export type TrustLabel = "New" | "Good payer" | "Sometimes late" | "Careful";
+/** The five ratings (approved 7 Nov). */
+export const TRUST_LABELS = ["Excellent payer", "Reliable payer", "Sometimes late", "High risk", "Insufficient history"] as const;
+export type TrustLabel = (typeof TRUST_LABELS)[number];
+
+/** Old names (before 7 Nov) still saved in owner overrides and Walrus memories. */
+const OLD_NAMES: Record<string, TrustLabel> = { New: "Insufficient history", "Good payer": "Reliable payer", Careful: "High risk" };
+
+/** Reads a saved label, old or new name; unknown text gives undefined (no override). */
+export function normalizeLabel(raw: string | null | undefined): TrustLabel | undefined {
+  if (!raw) return undefined;
+  if ((TRUST_LABELS as readonly string[]).includes(raw)) return raw as TrustLabel;
+  return OLD_NAMES[raw];
+}
 
 export interface TrustResult {
   customerId: string;
@@ -12,7 +24,7 @@ export interface TrustResult {
   considered: number;
   brokenPromises60d: number;
   maxOverdueDays: number;
-  /** Only for Careful and Sometimes late: the median fully-repaid credit amount, if any. */
+  /** Only for High risk and Sometimes late: the median fully-repaid credit amount, if any. */
   suggestedLimitKobo: number | null;
   overridden: boolean;
 }
@@ -36,11 +48,14 @@ export function trustLabel(state: DebtState, customerId: string, override?: Trus
 
   // Approved 6 Nov: the hard warning signs (30+ days overdue, 2 broken promises) apply even to a new
   // customer; the on-time rate only counts once there are 3 debts to judge.
+  // Five ratings (approved 7 Nov). A strong rating needs history: Excellent needs 5+ debts, all on
+  // time, nothing overdue now; fewer than 3 debts is "Insufficient history" unless a hard warning sign.
   let label: TrustLabel;
-  if (maxOverdueDays > 30 || brokenPromises60d >= 2) label = "Careful";
-  else if (n < 3) label = "New";
-  else if (onTime * 100 < 50 * n) label = "Careful";
-  else if (onTime * 100 >= 80 * n && lateness.reduce((s, x) => s + x, 0) <= 2 * n) label = "Good payer";
+  if (maxOverdueDays > 30 || brokenPromises60d >= 2) label = "High risk";
+  else if (n < 3) label = "Insufficient history";
+  else if (onTime * 100 < 50 * n) label = "High risk";
+  else if (n >= 5 && onTime === n && maxOverdueDays === 0) label = "Excellent payer";
+  else if (onTime * 100 >= 80 * n && lateness.reduce((s, x) => s + x, 0) <= 2 * n) label = "Reliable payer";
   else label = "Sometimes late";
 
   const lateDays = lateness.filter((x) => x > 0);
@@ -61,7 +76,7 @@ export function trustLabel(state: DebtState, customerId: string, override?: Trus
     considered: n,
     brokenPromises60d,
     maxOverdueDays,
-    suggestedLimitKobo: finalLabel === "Careful" || finalLabel === "Sometimes late" ? medianRepaid(mine) : null,
+    suggestedLimitKobo: finalLabel === "High risk" || finalLabel === "Sometimes late" ? medianRepaid(mine) : null,
     overridden: override !== undefined,
   };
 }

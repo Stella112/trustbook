@@ -24,7 +24,7 @@ Found and fixed along the way: the swap router dropped the "sponsor pays gas" se
 | Ledger tests pass; no floats in money code | **Done**: 107 tests pass; grep found one float in the swap margin, now integer |
 | Look screens from real ledger data; Demo label visible | **Done** |
 | Ask answers date questions from data | **Done** (Gate 2) |
-| Labels and advice visibly change after new payment behaviour | **Ready, not yet recorded**: `scripts/demo-check.ts` shows Emeka going New → Good payer (3 of 3 on time) after a ₦5,000 credit and full payment; must be done by 9 Nov |
+| Labels and advice visibly change after new payment behaviour | **Ready, not yet recorded**: `scripts/demo-check.ts` shows Emeka going Insufficient history → Reliable payer (3 of 3 on time) after a ₦5,000 credit and full payment; must be done by 9 Nov |
 | Recovery CLI: every step PASS without the app DB | **Done** (Gate 5) |
 | Four tamper tests fail in the right step | **Done**, in tests and live on `/verify` |
 | Rehearse-recovery shows identical advice | **Done**: all 8 customers identical |

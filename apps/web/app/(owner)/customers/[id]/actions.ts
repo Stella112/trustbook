@@ -1,6 +1,6 @@
 "use server";
 
-import { computeDebts, effectiveEntries, instantAt, localTime, parseNairaToKobo, proposeAllocations, validateEntry } from "@trustbook/ledger";
+import { computeDebts, effectiveEntries, instantAt, localTime, parseNairaToKobo, proposeAllocations, TRUST_LABELS, validateEntry } from "@trustbook/ledger";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
 import { ulid } from "ulid";
@@ -57,7 +57,7 @@ export async function markAsPaid(formData: FormData): Promise<void> {
 
 const LabelForm = z.object({
   customerId: z.string().min(1),
-  label: z.enum(["auto", "New", "Good payer", "Sometimes late", "Careful"]),
+  label: z.enum(["auto", ...TRUST_LABELS]),
   reason: z.string().trim().max(120).optional(),
 });
 

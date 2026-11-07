@@ -36,7 +36,7 @@ const debts = L.computeDebts(L.effectiveEntries(entries), settings, today);
 const customers = await db.select().from(schema.customers).where(eq(schema.customers.shopId, shop.id));
 console.log("\nCustomers today:");
 for (const c of customers) {
-  const t = L.trustLabel(debts, c.id, c.labelOverride ?? undefined);
+  const t = L.trustLabel(debts, c.id, L.normalizeLabel(c.labelOverride));
   console.log(`  ${c.name.padEnd(8)} ${t.label.padEnd(15)} owes ${L.formatNaira(debts.balances.get(c.id)?.owedKobo ?? 0).padEnd(9)} ${t.evidence}`);
 }
 

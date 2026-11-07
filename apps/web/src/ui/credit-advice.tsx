@@ -17,7 +17,7 @@ export async function CreditAdvice({ book, customerId, amountKobo }: { book: Boo
   const overLimit = amountKobo !== undefined && trust.suggestedLimitKobo !== null && amountKobo > trust.suggestedLimitKobo;
 
   return (
-    <section className={`mt-4 rounded-xl border p-4 ${trust.label === "Careful" ? "border-red-300 bg-red-50" : "border-stone-200 bg-white"}`}>
+    <section className={`mt-4 rounded-xl border p-4 ${trust.label === "High risk" ? "border-red-300 bg-red-50" : "border-stone-200 bg-white"}`}>
       <div className="flex items-center gap-2">
         <span className="font-semibold">Advice for {name}</span>
         <LabelBadge label={trust.label} overridden={trust.overridden} />

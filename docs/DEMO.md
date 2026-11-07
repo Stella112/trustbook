@@ -4,7 +4,7 @@ Follows the brief's demo (§6.11), using only things that really happen on mainn
 
 ## Before you record
 
-1. **Record on 7, 8 or 9 November.** Emeka's ₦24,750 debt is due on 9 November; after that his payment counts as late and his label will not turn "Good payer".
+1. **Record on 7, 8 or 9 November.** Emeka's ₦24,750 debt is due on 9 November; after that his payment counts as late and his rating will not turn "Reliable payer".
 2. **Record in two sittings, a day apart.** Days are sealed to Walrus each night (00:15–01:15 Lagos). Do steps 1–3 on day one; the nightly seal saves them; do steps 4–6 the next day, so the recovered books include what you recorded.
 3. **Run the read-only check** from `apps/web`. Every line should say OK, including "Emeka label change":
    ```bash
@@ -25,7 +25,7 @@ Follows the brief's demo (§6.11), using only things that really happen on mainn
 **1:00 — 3. Getting paid (40 s).**
 - Open **Customers → Tunde**. Show **Send reminder on WhatsApp** (the message opens with the pay link) and **Show QR code**.
 - Open the pay link, connect the wallet, and pay a small amount (make a ₦100 link if you like; the shop pays the gas). Choose **USDC**, or **SUI** to show the swap. Show the receipt: **Verified on Sui**, checked through Tatum.
-- Back on **Emeka**: tap **Mark as paid** for the full amount (cash). His label changes **New → Good payer**: "Paid 3 of 3 on time". "It learns from what customers do."
+- Back on **Emeka**: tap **Mark as paid** for the full amount (cash). His rating changes **Insufficient history → Reliable payer**: "Paid 3 of 3 on time". "It learns from what customers do."
 
 **1:40 — 4. Delete the database (30 s).** In a terminal (from `apps/web`):
 ```bash

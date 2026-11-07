@@ -65,7 +65,8 @@ export const customers = pgTable(
     /** Optional: lets Trustbook email the customer a reminder on the day they promised to pay. */
     email: text("email"),
     /** Owner's manual trust label, if set. Also written to behaviour memory in Phase 3. */
-    labelOverride: text("label_override", { enum: ["New", "Good payer", "Sometimes late", "Careful"] }),
+    // Plain text: rows saved before 7 Nov hold old names, read through normalizeLabel.
+    labelOverride: text("label_override"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("customers_shop_idx").on(t.shopId)],

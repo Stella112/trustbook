@@ -34,7 +34,7 @@ describe("behaviour memory events", () => {
     const history = [sale("a", "2026-09-01", "2026-09-05"), pay("pa", "2026-09-05"), sale("b", "2026-09-10", "2026-09-15"), pay("pb", "2026-09-15")];
     const events = eventsForNewEntries(history, [sale("c", "2026-09-20", "2026-09-25"), pay("pc", "2026-09-25")], ctx);
     const change = events.find((e) => e.kind === "label_change")!;
-    expect(JSON.parse(change.content)).toMatchObject({ from: "New", to: "Good payer" });
+    expect(JSON.parse(change.content)).toMatchObject({ from: "Insufficient history", to: "Reliable payer" });
   });
   it("finds broken promises once their date has passed", () => {
     const s = sale("s", "2026-11-01", "2026-11-03");

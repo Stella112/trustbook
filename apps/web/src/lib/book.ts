@@ -1,4 +1,4 @@
-import { computeDebts, effectiveEntries, localDate, validateEntry, type ShopSettings, type TrustLabel } from "@trustbook/ledger";
+import { computeDebts, effectiveEntries, localDate, normalizeLabel, validateEntry, type ShopSettings, type TrustLabel } from "@trustbook/ledger";
 import { asc, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { cache } from "react";
@@ -21,7 +21,7 @@ export async function bookForShop(shop: Shop) {
   const settings: ShopSettings = { shopId: shop.id, timezone: shop.timezone, openingCashKobo: shop.openingCashKobo, defaultDueDays: shop.defaultDueDays };
   const today = localDate(new Date().toISOString(), shop.timezone);
   const debts = computeDebts(effectiveEntries(entries), settings, today);
-  const overrides = Object.fromEntries(customers.map((c) => [c.id, (c.labelOverride ?? undefined) as TrustLabel | undefined]));
+  const overrides = Object.fromEntries(customers.map((c) => [c.id, normalizeLabel(c.labelOverride)]));
   return {
     shop,
     entries,

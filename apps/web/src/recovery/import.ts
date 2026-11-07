@@ -1,5 +1,5 @@
 import { findAnchorCap } from "@trustbook/chain";
-import { localDate, monthRange, validateEntry, type Entry } from "@trustbook/ledger";
+import { localDate, monthRange, normalizeLabel, validateEntry, type Entry } from "@trustbook/ledger";
 import { dedupeKeyFor, parseMemory } from "@trustbook/memory";
 import type { RecoveredBooks, RecoveredMemory } from "@trustbook/recovery-core";
 import { eq } from "drizzle-orm";
@@ -79,7 +79,7 @@ export async function importRecovered(books: RecoveredBooks, memories: Recovered
     const customers = Object.entries(books.directory.customers);
     if (customers.length)
       await tx.insert(schema.customers).values(
-        customers.map(([id, c]) => ({ id, shopId: books.shopId, name: c.name, phone: c.phone, labelOverride: (overrides.get(id)?.label ?? null) as (typeof schema.customers.$inferInsert)["labelOverride"] })),
+        customers.map(([id, c]) => ({ id, shopId: books.shopId, name: c.name, phone: c.phone, labelOverride: normalizeLabel(overrides.get(id)?.label) ?? null })),
       );
     const items = Object.entries(books.directory.items);
     if (items.length) await tx.insert(schema.items).values(items.map(([id, i]) => ({ id, shopId: books.shopId, name: i.name, unit: i.unit })));

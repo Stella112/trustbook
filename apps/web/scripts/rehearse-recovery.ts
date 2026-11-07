@@ -32,7 +32,7 @@ if (values.snapshot) {
   const asOf = values.snapshot;
   const { db, schema, closeDb } = await import("../src/db/client");
   const { asc, eq } = await import("drizzle-orm");
-  const { computeDebts, effectiveEntries, localDate, monthSummary, validateEntry } = await import("@trustbook/ledger");
+  const { computeDebts, effectiveEntries, localDate, monthSummary, normalizeLabel, validateEntry } = await import("@trustbook/ledger");
   const { adviceFor } = await import("../src/lib/advice");
   const [shop] = await db.select().from(schema.shops).where(eq(schema.shops.id, shopId));
   if (!shop) throw new Error(`no shop ${shopId}`);
@@ -43,7 +43,7 @@ if (values.snapshot) {
   const settings = { shopId, timezone: shop.timezone, openingCashKobo: shop.openingCashKobo, defaultDueDays: shop.defaultDueDays };
   const debts = computeDebts(effectiveEntries(entries), settings, asOf);
   const advice = [];
-  for (const c of customers) advice.push(await adviceFor({ shopId, today: asOf, debts, customerId: c.id, name: c.name, override: c.labelOverride ?? undefined }));
+  for (const c of customers) advice.push(await adviceFor({ shopId, today: asOf, debts, customerId: c.id, name: c.name, override: normalizeLabel(c.labelOverride) }));
   const months: Snapshot["months"] = {};
   for (const m of [...new Set(entries.map((e) => localDate(e.occurredAt, shop.timezone).slice(0, 7)))].sort()) months[m] = monthSummary(entries, settings, m, asOf);
   const out: Snapshot = { asOf, unsealed: all.length - entries.length, totalEntries: entries.length, advice, months };
@@ -120,7 +120,7 @@ for (const b of before.advice) {
   else if (!same(b, a)) differences.push(`${b.name}: advice differs`);
 }
 
-const focus = values.customer ?? before.advice.find((a) => a.label === "Careful")?.customerId ?? before.advice[0]?.customerId;
+const focus = values.customer ?? before.advice.find((a) => a.label === "High risk")?.customerId ?? before.advice[0]?.customerId;
 const fb = before.advice.find((a) => a.customerId === focus);
 const fa = after.advice.find((a) => a.customerId === focus);
 const col = (s: string) => s.padEnd(58).slice(0, 58);

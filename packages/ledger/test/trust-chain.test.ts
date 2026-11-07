@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildDayRecord, canonicalize, computeDebts, effectiveEntries, entriesRecordedOn, GENESIS, hashRecord, trustLabel, verifyChain, verifyRecord, type DayRecord, type Entry } from "../src/index";
+import { buildDayRecord, canonicalize, normalizeLabel, computeDebts, effectiveEntries, entriesRecordedOn, GENESIS, hashRecord, trustLabel, verifyChain, verifyRecord, type DayRecord, type Entry } from "../src/index";
 import { correction, payment, promise, sale, settings, SHOP } from "./fixtures";
 
 const label = (entries: Entry[], asOf: string, customerId = "c1") => trustLabel(computeDebts(effectiveEntries(entries), settings, asOf), customerId);
@@ -13,14 +13,14 @@ function debt(saleDate: string, due: string, paidOn?: string): Entry[] {
 describe("trust labels", () => {
   it("is New with fewer than 3 debts settled or due", () => {
     const r = label([...debt("2026-10-01", "2026-10-05", "2026-10-04"), ...debt("2026-10-06", "2026-10-10", "2026-10-09")], "2026-10-20");
-    expect(r.label).toBe("New");
+    expect(r.label).toBe("Insufficient history");
     expect(r.considered).toBe(2);
   });
   it("does not count debts that are not yet due", () => {
     const r = label([...debt("2026-10-01", "2026-10-05", "2026-10-04"), ...debt("2026-10-02", "2026-10-30"), ...debt("2026-10-03", "2026-10-30")], "2026-10-20");
     expect(r.considered).toBe(1);
   });
-  it("is Good payer at 80%+ on time with average lateness of 2 days or less", () => {
+  it("is Reliable payer at 80%+ on time with average lateness of 2 days or less", () => {
     const entries = [
       ...debt("2026-10-01", "2026-10-05", "2026-10-05"),
       ...debt("2026-10-06", "2026-10-10", "2026-10-09"),
@@ -29,7 +29,7 @@ describe("trust labels", () => {
       ...debt("2026-10-21", "2026-10-25", "2026-10-27"), // 2 days late
     ];
     const r = label(entries, "2026-11-01");
-    expect(r.label).toBe("Good payer");
+    expect(r.label).toBe("Reliable payer");
     expect(r.evidence).toBe("Paid 4 of 5 on time · usually 2 days late");
     expect(r.suggestedLimitKobo).toBeNull();
   });
@@ -40,7 +40,7 @@ describe("trust labels", () => {
       ...debt("2026-10-11", "2026-10-15", "2026-10-15"),
     ];
     const r = label(entries, "2026-11-01");
-    expect(r.label).toBe("Careful");
+    expect(r.label).toBe("High risk");
     expect(r.evidence).toBe("Paid 1 of 3 on time · usually 9 days late");
     expect(r.suggestedLimitKobo).toBe(100_000);
   });
@@ -54,7 +54,7 @@ describe("trust labels", () => {
     ];
     const r = label(entries, "2026-10-26");
     expect(r.maxOverdueDays).toBe(31);
-    expect(r.label).toBe("Careful");
+    expect(r.label).toBe("High risk");
   });
   it("is Careful after 2 broken promises in 60 days", () => {
     const s = sale("2026-10-01", { paid: 0, customerId: "c1" });
@@ -70,7 +70,7 @@ describe("trust labels", () => {
     ];
     const r = label(entries, "2026-10-20");
     expect(r.brokenPromises60d).toBe(2);
-    expect(r.label).toBe("Careful");
+    expect(r.label).toBe("High risk");
     expect(r.evidence).toContain("2 promises broken");
   });
   it("is Sometimes late between the two", () => {
@@ -84,8 +84,8 @@ describe("trust labels", () => {
     expect(r.suggestedLimitKobo).toBe(100_000);
   });
   it("lets the owner override a label", () => {
-    const r = trustLabel(computeDebts([], settings, "2026-11-01"), "c1", "Careful");
-    expect(r).toMatchObject({ label: "Careful", overridden: true, evidence: "No credit due yet" });
+    const r = trustLabel(computeDebts([], settings, "2026-11-01"), "c1", "High risk");
+    expect(r).toMatchObject({ label: "High risk", overridden: true, evidence: "No credit due yet" });
   });
 });
 
@@ -148,9 +148,26 @@ describe("Careful before New (approved 6 Nov)", () => {
   it("marks a new customer Careful when a debt is more than 30 days overdue", () => {
     const r = label(debt("2026-09-01", "2026-09-05"), "2026-10-06");
     expect(r.considered).toBe(1);
-    expect(r.label).toBe("Careful");
+    expect(r.label).toBe("High risk");
   });
   it("keeps a new customer New after one late payment", () => {
-    expect(label(debt("2026-10-01", "2026-10-05", "2026-10-09"), "2026-10-20").label).toBe("New");
+    expect(label(debt("2026-10-01", "2026-10-05", "2026-10-09"), "2026-10-20").label).toBe("Insufficient history");
+  });
+});
+
+describe("five ratings (approved 7 Nov)", () => {
+  const onTime = (n: number) => Array.from({ length: n }, (_, i) => debt(`2026-09-${String(1 + i * 4).padStart(2, "0")}`, `2026-09-${String(3 + i * 4).padStart(2, "0")}`, `2026-09-${String(3 + i * 4).padStart(2, "0")}`)).flat();
+  it("gives Excellent payer only with 5+ debts all paid on time", () => {
+    expect(label(onTime(5), "2026-10-15").label).toBe("Excellent payer");
+  });
+  it("keeps 3 on-time debts at Reliable payer: not enough history for Excellent", () => {
+    expect(label(onTime(3), "2026-10-15").label).toBe("Reliable payer");
+  });
+  it("reads labels saved under the old names", () => {
+    expect(normalizeLabel("Good payer")).toBe("Reliable payer");
+    expect(normalizeLabel("Careful")).toBe("High risk");
+    expect(normalizeLabel("New")).toBe("Insufficient history");
+    expect(normalizeLabel("Excellent payer")).toBe("Excellent payer");
+    expect(normalizeLabel(null)).toBeUndefined();
   });
 });

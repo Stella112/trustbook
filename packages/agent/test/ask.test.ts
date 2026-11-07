@@ -22,7 +22,7 @@ describe("answers built only from ledger data", () => {
   });
   it("reports a customer's balance, overdue part and label", () => {
     const a = answer({ intent: "customer_balance", customerName: "tunde" }, ctx);
-    expect(a.text).toMatch(/^Tunde owes you ₦6,000, and ₦6,000 of it is overdue\. Label: New/);
+    expect(a.text).toMatch(/^Tunde owes you ₦6,000, and ₦6,000 of it is overdue\. Rating: Insufficient history/);
   });
   it("lists overdue customers and top debtors", () => {
     expect(answer({ intent: "overdue" }, ctx).text).toBe("1 customer is overdue, ₦6,000 in all: Tunde ₦6,000.");

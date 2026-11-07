@@ -151,11 +151,11 @@ export function answer(intent: Intent, ctx: AskContext): Answer {
       const t = trustLabel(debts, r.customer.id);
       const owed = b?.owedKobo ?? 0;
       return {
-        text: `${r.customer.name} owes you ${formatNaira(owed)}${(b?.overdueKobo ?? 0) > 0 ? `, and ${formatNaira(b!.overdueKobo)} of it is overdue` : ""}. Label: ${t.label} — ${t.evidence}.${t.suggestedLimitKobo ? ` Suggested credit limit: ${formatNaira(t.suggestedLimitKobo)}.` : ""}`,
+        text: `${r.customer.name} owes you ${formatNaira(owed)}${(b?.overdueKobo ?? 0) > 0 ? `, and ${formatNaira(b!.overdueKobo)} of it is overdue` : ""}. Rating: ${t.label} — ${t.evidence}.${t.suggestedLimitKobo ? ` Suggested credit limit: ${formatNaira(t.suggestedLimitKobo)}.` : ""}`,
         facts: [
           { label: "Owes", value: formatNaira(owed) },
           { label: "Overdue", value: formatNaira(b?.overdueKobo ?? 0) },
-          { label: "Label", value: t.label },
+          { label: "Rating", value: t.label },
         ],
       };
     }
@@ -251,13 +251,13 @@ export function answer(intent: Intent, ctx: AskContext): Answer {
       const t = trustLabel(debts, r.customer.id);
       const reasons: string[] = [];
       if (overdue > 0) reasons.push(`${formatNaira(overdue)} is already overdue`);
-      if (t.label === "Careful") reasons.push(`they are rated ${t.label}`);
+      if (t.label === "High risk") reasons.push(`they are rated ${t.label}`);
       if (ask && t.suggestedLimitKobo !== null && owed + ask > t.suggestedLimitKobo)
         reasons.push(`that would bring them to ${formatNaira(owed + ask)}, above the suggested limit of ${formatNaira(t.suggestedLimitKobo)}`);
       const amountText = ask ? `${formatNaira(ask)} credit` : "credit";
       const advice = reasons.length
         ? `Be careful giving ${r.customer.name} ${amountText}: ${reasons.join("; ")}. Ask for part payment first, or give a smaller amount.`
-        : t.label === "New"
+        : t.label === "Insufficient history"
           ? `${r.customer.name} has little credit history yet. Start small and see how they pay.`
           : `${r.customer.name} looks fine for ${amountText}.`;
       return {
