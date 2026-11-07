@@ -20,7 +20,7 @@ Built for **Total Recall — Tatum × Walrus Memory Hackathon**, Track 03 (Consu
 | **See the business** | Today, This month, a calendar of days, customers sorted by what they owe, CSV export. Totals come from deterministic code; the language model never does arithmetic. |
 | **Ask** | "Wetin happen on 14 October?" Questions are answered from ledger queries; dates are resolved in code, in the shop's timezone. |
 | **Credit advice that learns** | Each customer has a trust label with its evidence ("Paid 0 of 6 on time · usually 5 days late · 4 promises broken"). Advice quotes memories recalled from Walrus Memory. |
-| **Get paid** | Signed pay links and QR codes, WhatsApp reminders sent from the owner's own phone, and Sui payments in USDC, or in any token swapped to USDC in the same payment. The shop sponsors the gas. Every payment is verified through Tatum before it is recorded. |
+| **Get paid** | Signed pay links and QR codes, WhatsApp reminders sent from the owner's own phone, and Sui payments in USDC, or in any token swapped to USDC in the same payment. Trustbook sponsors all gas from its own wallet; neither shop nor customer needs SUI for fees. Every payment is verified through Tatum before it is recorded. |
 | **Provable recovery** | Every closed day is sealed to Walrus and chained by hash, and the newest day is anchored on Sui. A standalone tool rebuilds the books and proves they are complete, unchanged and reconciled. |
 
 ## How Trustbook uses Walrus Memory

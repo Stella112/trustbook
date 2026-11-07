@@ -149,7 +149,7 @@ function Flow({ token }: { token: string }) {
               </div>
               {chosen && (
                 <p className="mt-2 text-sm text-stone-700">
-                  {estimate === "loading" ? "Checking the price…" : estimate === "none" ? `${chosen.symbol} cannot be swapped for this amount right now. Please choose USDC.` : estimate && estimate.coinType === chosen.coinType ? `You pay ${estimate.text}. It is swapped to exactly ${quote.usdc} USDC for the shop in the same payment; any extra comes back to you as USDC. Network fee paid by the shop.` : ""}
+                  {estimate === "loading" ? "Checking the price…" : estimate === "none" ? `${chosen.symbol} cannot be swapped for this amount right now. Please choose USDC.` : estimate && estimate.coinType === chosen.coinType ? `You pay ${estimate.text}. It is swapped to exactly ${quote.usdc} USDC for the shop in the same payment; any extra comes back to you as USDC. Network fee paid by Trustbook.` : ""}
                 </p>
               )}
             </fieldset>

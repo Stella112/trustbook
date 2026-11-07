@@ -14,7 +14,7 @@ const FEATURES = [
   { title: "See the whole shop", body: "Today, this month, every day on a calendar, who owes what, and a CSV of every record whenever you want it." },
   { title: "Ask your book", body: "“Wetin happen on 14 October?” Answers come from your own records, never made-up numbers." },
   { title: "Remind on WhatsApp", body: "One tap sends a polite reminder from your own phone, with a link and QR code to pay." },
-  { title: "Get paid on Sui", body: "Customers pay with USDC or any Sui token. You pay the network fee, they pay nothing extra, and every payment is checked." },
+  { title: "Get paid on Sui", body: "Customers pay with USDC or any Sui token. Trustbook pays every network fee, so neither you nor your customer needs SUI for gas, and every payment is checked." },
   { title: "Your PIN guards money", body: "Marking a debt as paid or changing where money goes needs your 6-number PIN." },
 ];
 

@@ -10,7 +10,7 @@ I built **Trustbook** to keep that book and that sense, and to keep them safe.
 
 The owner types or says what happened, in Pidgin or English: "Tunde collect 2 crates egg, 9k, he go pay Friday." Trustbook reads it with Gemini and shows a card: a sale of ₦9,000 to Tunde, on credit, promised for Friday. Nothing is saved until she taps Confirm. The language model only reads words. Every naira is counted by plain code, in kobo, with no floating point, in a ledger that is append-only: mistakes are fixed with new correction entries, never by editing old ones.
 
-From there she can see her day, her month and every customer, and ask questions like "Wetin happen on 14 October?". Each customer gets a trust label with its evidence: "Paid 0 of 6 on time · usually 5 days late · 4 promises broken." She can send a WhatsApp reminder from her own phone with a pay link and a QR code. The customer pays in USDC, or in SUI or another token that is swapped to USDC in the same payment. The shop pays the network fee, so the customer needs no SUI for gas.
+From there she can see her day, her month and every customer, and ask questions like "Wetin happen on 14 October?". Each customer gets a trust label with its evidence: "Paid 0 of 6 on time · usually 5 days late · 4 promises broken." She can send a WhatsApp reminder from her own phone with a pay link and a QR code. The customer pays in USDC, or in SUI or another token that is swapped to USDC in the same payment. Trustbook pays the network fee from its own wallet, so neither the shop nor the customer needs SUI for gas.
 
 ## How it learns: Walrus Memory
 
