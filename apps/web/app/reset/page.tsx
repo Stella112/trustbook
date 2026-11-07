@@ -1,3 +1,4 @@
+import { Logo } from "../../src/ui/logo";
 import { ResetForm } from "./form";
 
 export const metadata = { title: "Choose a new password · Trustbook" };
@@ -5,8 +6,11 @@ export const metadata = { title: "Choose a new password · Trustbook" };
 export default async function ResetPage({ searchParams }: { searchParams: Promise<{ token?: string }> }) {
   const { token = "" } = await searchParams;
   return (
-    <main className="mx-auto max-w-md px-4 py-8">
-      <h1 className="text-3xl font-bold">Choose a new password</h1>
+    <main className="mx-auto max-w-md px-5 pb-12 pt-8">
+      <a href="/welcome" className="mb-10 inline-block" aria-label="Trustbook home">
+        <Logo />
+      </a>
+      <h1 className="text-3xl">Choose a new password</h1>
       {token ? (
         <ResetForm token={token} />
       ) : (

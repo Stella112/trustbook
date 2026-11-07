@@ -34,7 +34,7 @@ export default async function CustomerPage({ params, searchParams }: { params: P
 
   return (
     <>
-      <h1 className="mt-1 text-3xl font-bold">{customer.name}</h1>
+      <h1 className="mt-1 text-3xl">{customer.name}</h1>
       <div className="mt-1">
         <LabelBadge label={trust.label} overridden={trust.overridden} />
       </div>
@@ -51,7 +51,7 @@ export default async function CustomerPage({ params, searchParams }: { params: P
       {promise === "saved" && <p role="status" className="mt-3 rounded-lg bg-emerald-100 px-3 py-2 font-semibold text-emerald-900">Promise saved. {customer.name} will show in Today&apos;s reminders on that day.</p>}
 
       <Section title="Contact">
-        <details id="contact" className="rounded-xl bg-white p-4 shadow-sm" open={!customer.phone || (!!contact && contact !== "saved")}>
+        <details id="contact" className="rounded-xl bg-white p-4 border border-stone-200" open={!customer.phone || (!!contact && contact !== "saved")}>
           <summary className="cursor-pointer font-medium">
             {customer.phone ? `WhatsApp ${customer.phone}` : "No phone number yet"}
             {customer.email ? ` · ${customer.email}` : ""}
@@ -78,9 +78,9 @@ export default async function CustomerPage({ params, searchParams }: { params: P
 
       {owed > 0 && (
         <Section title="Get paid">
-          <div className="space-y-3 rounded-xl bg-white p-4 shadow-sm">
+          <div className="space-y-3 rounded-xl bg-white p-4 border border-stone-200">
             {whatsapp ? (
-              <a href={whatsapp} target="_blank" rel="noopener noreferrer" className="block rounded-xl bg-emerald-700 px-4 py-3 text-center text-lg font-semibold text-white">
+              <a href={whatsapp} target="_blank" rel="noopener noreferrer" className="block rounded-full bg-emerald-700 px-4 py-3 text-center text-lg font-semibold text-white">
                 Send reminder on WhatsApp
               </a>
             ) : (
@@ -135,7 +135,7 @@ export default async function CustomerPage({ params, searchParams }: { params: P
         {open.length === 0 ? (
           <p className="text-stone-600">Nothing owed.</p>
         ) : (
-          <ul className="rounded-xl bg-white px-4 shadow-sm">
+          <ul className="rounded-xl bg-white px-4 border border-stone-200">
             {open.map((d) => (
               <li key={d.saleId} className="border-b border-stone-100 py-3 last:border-0">
                 <div className="flex justify-between">
@@ -159,7 +159,7 @@ export default async function CustomerPage({ params, searchParams }: { params: P
       </Section>
 
       <Section title="Label">
-        <details className="rounded-xl bg-white p-4 shadow-sm" open={!!labelSaved}>
+        <details className="rounded-xl bg-white p-4 border border-stone-200" open={!!labelSaved}>
           <summary className="cursor-pointer font-medium">
             {trust.overridden ? `You set this label. The rules say: ${automatic.label}.` : `Set by the rules: ${automatic.label}. Change it?`}
           </summary>
@@ -182,7 +182,7 @@ export default async function CustomerPage({ params, searchParams }: { params: P
       </Section>
 
       <Section title="History">
-        <ul className="rounded-xl bg-white px-4 shadow-sm">
+        <ul className="rounded-xl bg-white px-4 border border-stone-200">
           {history.map((e) => (
             <EntryLine key={e.id} e={e} book={book} showTime={false} />
           ))}

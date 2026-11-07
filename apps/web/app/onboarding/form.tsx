@@ -38,7 +38,7 @@ export function OnboardingForm() {
       <Field name="pin" label="Choose a 6-number PIN" type="password" inputMode="numeric" error={state.errors.pin} hint="You will type it to approve money actions, like marking a debt as paid." />
       <Field name="pinConfirm" label="Type the PIN again" type="password" inputMode="numeric" error={state.errors.pinConfirm} />
       {state.errors.form && <p className="text-red-700">{state.errors.form}</p>}
-      <button type="submit" disabled={pending} className="w-full rounded-xl bg-emerald-700 px-4 py-4 text-lg font-semibold text-white disabled:opacity-60">
+      <button type="submit" disabled={pending} className="w-full rounded-full bg-emerald-700 px-4 py-4 text-lg font-semibold text-white disabled:opacity-60">
         {pending ? "Setting up…" : "Start my book"}
       </button>
     </form>

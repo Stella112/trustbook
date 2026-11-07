@@ -12,15 +12,15 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
   if (!q || q.status !== "paid" || !q.digest || !shop) {
     return (
       <main className="mx-auto max-w-md px-4 py-10">
-        <h1 className="text-2xl font-bold">Receipt not found</h1>
+        <h1 className="text-2xl">Receipt not found</h1>
       </main>
     );
   }
   return (
     <main className="mx-auto max-w-md px-4 py-8">
       <p className="text-sm font-semibold uppercase tracking-wide text-emerald-800">{shop.name}</p>
-      <h1 className="mt-1 text-3xl font-bold">Receipt</h1>
-      <div className="mt-4 rounded-xl bg-white p-4 shadow-sm">
+      <h1 className="mt-1 text-3xl">Receipt</h1>
+      <div className="mt-4 rounded-xl bg-white p-4 border border-stone-200">
         <div className="flex justify-between py-1">
           <span className="text-stone-600">Amount</span>
           <span className="font-semibold">{formatNaira(q.amountKobo)}</span>

@@ -109,7 +109,7 @@ function Flow({ token }: { token: string }) {
       <div className="mt-6 rounded-xl border-2 border-emerald-700 bg-white p-4">
         <p className="text-xl font-bold text-emerald-800">Paid. Thank you!</p>
         <p className="mt-1">Verified on Sui.</p>
-        <a href={receipt.receiptUrl} className="mt-3 block rounded-xl bg-emerald-700 px-4 py-3 text-center font-semibold text-white">
+        <a href={receipt.receiptUrl} className="mt-3 block rounded-full bg-emerald-700 px-4 py-3 text-center font-semibold text-white">
           See receipt
         </a>
       </div>
@@ -118,7 +118,7 @@ function Flow({ token }: { token: string }) {
   return (
     <div className="mt-6 space-y-4">
       {quote && (
-        <div className="rounded-xl bg-white p-4 shadow-sm">
+        <div className="rounded-xl bg-white p-4 border border-stone-200">
           <div className="text-sm text-stone-600">You pay</div>
           <div className="text-2xl font-bold">{quote.usdc} USDC</div>
           <div className="text-sm text-stone-600">
@@ -137,7 +137,7 @@ function Flow({ token }: { token: string }) {
         <>
           <ConnectButton />
           {account && tokens.length > 0 && (
-            <fieldset className="rounded-xl bg-white p-4 shadow-sm">
+            <fieldset className="rounded-xl bg-white p-4 border border-stone-200">
               <legend className="px-1 text-sm font-semibold text-stone-700">Pay with</legend>
               <div className="grid gap-2">
                 {[{ coinType: "USDC", symbol: "USDC" }, ...tokens].map((t) => (
@@ -159,7 +159,7 @@ function Flow({ token }: { token: string }) {
               type="button"
               onClick={pay}
               disabled={step !== "ready" || (chosen !== null && (estimate === "none" || estimate === "loading"))}
-              className="w-full rounded-xl bg-emerald-700 px-4 py-4 text-lg font-semibold text-white disabled:opacity-60"
+              className="w-full rounded-full bg-emerald-700 px-4 py-4 text-lg font-semibold text-white disabled:opacity-60"
             >
               {step === "preparing" ? "Preparing…" : step === "signing" ? "Approve in your wallet…" : step === "confirming" ? "Confirming on Sui…" : chosen ? `Pay with ${chosen.symbol}` : `Pay ${quote.usdc} USDC`}
             </button>

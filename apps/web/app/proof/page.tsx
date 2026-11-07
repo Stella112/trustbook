@@ -87,7 +87,7 @@ export default async function ProofPage() {
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="text-3xl font-bold">Proof</h1>
+      <h1 className="text-3xl">Proof</h1>
       <p className="mt-1 text-stone-700">Live evidence that Trustbook writes to Walrus Memory on mainnet and reads Sui through Tatum.</p>
 
       <section className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -111,7 +111,7 @@ export default async function ProofPage() {
             restore limit. Held for this week&apos;s summary: {count("held")} · already summarised: {count("summarized")}.
           </p>
         )}
-        <ul className="mt-3 divide-y divide-stone-200 rounded-xl bg-white shadow-sm">
+        <ul className="mt-3 divide-y divide-stone-200 rounded-xl bg-white border border-stone-200">
           {recent.map((r) => (
             <li key={r.blobId} className="px-4 py-3 text-sm">
               <div className="flex flex-wrap items-center gap-2">
@@ -165,7 +165,7 @@ export default async function ProofPage() {
             {shopSeals.length === 0 ? (
               <p className="mt-2 text-stone-600">Nothing sealed yet.</p>
             ) : (
-              <ul className="mt-2 divide-y divide-stone-200 rounded-xl bg-white text-sm shadow-sm">
+              <ul className="mt-2 divide-y divide-stone-200 rounded-xl bg-white text-sm border border-stone-200">
                 {shopSeals.map((x) => (
                   <li key={x.blobId} className="px-4 py-3">
                     <div className="font-semibold">
@@ -192,7 +192,7 @@ export default async function ProofPage() {
         {payments.length === 0 ? (
           <p className="text-stone-600">No Sui payments yet.</p>
         ) : (
-          <ul className="mt-2 divide-y divide-stone-200 rounded-xl bg-white shadow-sm">
+          <ul className="mt-2 divide-y divide-stone-200 rounded-xl bg-white border border-stone-200">
             {payments.map((p) => (
               <li key={p.digest} className="px-4 py-3 text-sm">
                 <div className="font-semibold">
@@ -213,7 +213,7 @@ export default async function ProofPage() {
 
 function Card({ title, ok, detail }: { title: string; ok: boolean; detail: string }) {
   return (
-    <div className="rounded-xl bg-white p-4 shadow-sm">
+    <div className="rounded-xl bg-white p-4 border border-stone-200">
       <div className="flex items-center gap-2 font-semibold">
         <span className={`inline-block h-3 w-3 rounded-full ${ok ? "bg-emerald-600" : "bg-red-600"}`} />
         {title}

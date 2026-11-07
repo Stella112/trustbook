@@ -10,14 +10,14 @@ export default async function CustomersPage() {
   const owed = rows.reduce((s, r) => s + r.owedKobo, 0);
   return (
     <>
-      <h1 className="mt-1 text-3xl font-bold">Customers</h1>
+      <h1 className="mt-1 text-3xl">Customers</h1>
       <p className="text-stone-600">
         {rows.length} customers · {formatNaira(owed)} owed to you
       </p>
       <ul className="mt-4 space-y-3">
         {rows.map((r) => (
           <li key={r.customerId}>
-            <Link href={`/customers/${r.customerId}`} className="block rounded-xl bg-white p-4 shadow-sm">
+            <Link href={`/customers/${r.customerId}`} className="block rounded-xl bg-white p-4 border border-stone-200">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="text-lg font-semibold">{book.customerName(r.customerId)}</div>

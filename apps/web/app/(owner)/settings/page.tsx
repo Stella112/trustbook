@@ -13,10 +13,10 @@ export default async function SettingsPage() {
   const live = shop.mode === "LIVE";
   return (
     <>
-      <h1 className="mt-1 text-3xl font-bold">Settings</h1>
+      <h1 className="mt-1 text-3xl">Settings</h1>
 
       <Section title="Getting paid on Sui">
-        <div className="rounded-xl bg-white p-4 shadow-sm">
+        <div className="rounded-xl bg-white p-4 border border-stone-200">
           {live ? (
             <>
               {!shop.suiAddress && (
@@ -38,7 +38,7 @@ export default async function SettingsPage() {
       </Section>
 
       <Section title="Your account">
-        <div className="space-y-2 rounded-xl bg-white p-4 text-stone-700 shadow-sm">
+        <div className="space-y-2 rounded-xl bg-white p-4 text-stone-700 border border-stone-200">
           <p>
             Shop: <span className="font-semibold">{shop.name}</span> · {live ? "Live shop" : "Demo data"}
           </p>

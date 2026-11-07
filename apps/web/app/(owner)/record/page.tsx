@@ -55,7 +55,7 @@ export default async function RecordPage({ searchParams }: { searchParams: Promi
 
   return (
     <>
-      <h1 className="mt-1 text-3xl font-bold">Check this</h1>
+      <h1 className="mt-1 text-3xl">Check this</h1>
       <p className="mt-1 text-stone-600">
         {fromVoice && <span className="font-semibold">You said: </span>}“{note}”
       </p>
@@ -116,7 +116,7 @@ const KIND_TITLE: Record<Draft["kind"], string> = {
 function NoteBox({ note, message }: { note: string; message?: string }) {
   return (
     <div className="mt-4">
-      {!note && <h1 className="mt-1 text-3xl font-bold">Record</h1>}
+      {!note && <h1 className="mt-1 text-3xl">Record</h1>}
       {message && <p className="mb-2 text-stone-700">{message}</p>}
       <form action="/record" method="get">
         <textarea
@@ -129,7 +129,7 @@ function NoteBox({ note, message }: { note: string; message?: string }) {
           placeholder="Tunde collect 2 crates egg, 9k, he go pay Friday"
           className="block w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-lg"
         />
-        <button type="submit" className="mt-3 w-full rounded-xl bg-emerald-700 px-4 py-4 text-lg font-semibold text-white">
+        <button type="submit" className="mt-3 w-full rounded-full bg-emerald-700 px-4 py-4 text-lg font-semibold text-white">
           Read it
         </button>
       </form>

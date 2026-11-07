@@ -1,1 +1,94 @@
 @import "tailwindcss";
+
+/*
+ * Trustbook look (approved 7 Nov): white pages, an editorial serif for headings, a calm sans for
+ * text, olive green for actions and a lime accent. Redefining Tailwind's emerald and stone scales
+ * here restyles every existing screen at once; new code should use the semantic names below.
+ */
+@theme {
+  --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-newsreader), ui-serif, Georgia, serif;
+
+  /* Olive: actions, links, good news. */
+  --color-emerald-50: #f6f8e9;
+  --color-emerald-100: #ecf1cf;
+  --color-emerald-200: #dbe5a3;
+  --color-emerald-300: #c3d36c;
+  --color-emerald-500: #7a8f0a;
+  --color-emerald-600: #687d00;
+  --color-emerald-700: #5b6f00;
+  --color-emerald-800: #4a5a00;
+  --color-emerald-900: #3a4600;
+
+  /* Warm neutrals: text, lines, cards. */
+  --color-stone-50: #fbfaf7;
+  --color-stone-100: #f4f3ee;
+  --color-stone-200: #e8e6de;
+  --color-stone-300: #d6d3c8;
+  --color-stone-400: #a9a59a;
+  --color-stone-500: #7c786d;
+  --color-stone-600: #5d5a52;
+  --color-stone-700: #44423c;
+  --color-stone-900: #292929;
+
+  --color-lime: #d4e85a;
+  --color-ink: #0e0f0c;
+  --color-paper: #f4f3ee;
+}
+
+@layer base {
+  body {
+    background: #fff;
+    color: var(--color-stone-900);
+  }
+  h1,
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: -0.015em;
+  }
+  h1 {
+    line-height: 1.05;
+  }
+}
+
+/* Primary action: an olive pill. */
+@utility btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  background: var(--color-emerald-700);
+  color: #fcfcf8;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  transition: background 0.15s;
+  &:hover {
+    background: var(--color-emerald-800);
+  }
+}
+
+/* Secondary action: an outlined pill. */
+@utility btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1px solid var(--color-stone-300);
+  background: #fff;
+  color: var(--color-stone-900);
+  font-weight: 500;
+  padding: 0.6rem 1.25rem;
+  &:hover {
+    background: var(--color-stone-100);
+  }
+}
+
+/* The "app window" card: warm paper, soft border, three dots. */
+@utility window {
+  background: var(--color-paper);
+  border: 1px solid var(--color-stone-200);
+  border-radius: 14px;
+  box-shadow: 0 30px 60px -30px rgb(14 15 12 / 0.25);
+}

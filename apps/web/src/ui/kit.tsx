@@ -3,9 +3,9 @@ import type { ReactNode } from "react";
 
 export function Stat({ label, value, note, tone }: { label: string; value: string; note?: string; tone?: "warn" | "good" }) {
   return (
-    <div className="rounded-xl bg-white p-4 shadow-sm">
+    <div className="rounded-2xl border border-stone-200 bg-stone-100 p-4">
       <div className="text-sm text-stone-600">{label}</div>
-      <div className={`mt-1 text-xl font-bold ${tone === "warn" ? "text-red-700" : tone === "good" ? "text-emerald-800" : ""}`}>{value}</div>
+      <div className={`mt-1 font-display text-[1.7rem] leading-tight ${tone === "warn" ? "text-red-700" : tone === "good" ? "text-emerald-800" : "text-stone-900"}`}>{value}</div>
       {note && <div className="mt-1 text-xs text-stone-600">{note}</div>}
     </div>
   );
@@ -15,7 +15,7 @@ export function Section({ title, children, action }: { title: string; children: 
   return (
     <section className="mt-6">
       <div className="mb-2 flex items-baseline justify-between">
-        <h2 className="text-lg font-semibold">{title}</h2>
+        <h2 className="text-2xl">{title}</h2>
         {action}
       </div>
       {children}

@@ -21,7 +21,7 @@ export function ConfirmForm({ token, editHref, needsPin }: { token: string; edit
         <Link href={editHref} className="rounded-xl border border-stone-400 px-4 py-4 text-center text-lg font-medium">
           Change
         </Link>
-        <button type="submit" disabled={pending} className="rounded-xl bg-emerald-700 px-4 py-4 text-lg font-semibold text-white disabled:opacity-60">
+        <button type="submit" disabled={pending} className="rounded-full bg-emerald-700 px-4 py-4 text-lg font-semibold text-white disabled:opacity-60">
           {pending ? "Saving…" : "Confirm"}
         </button>
       </div>

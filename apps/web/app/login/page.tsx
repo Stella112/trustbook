@@ -1,3 +1,4 @@
+import { Logo } from "../../src/ui/logo";
 import { openDemoShop } from "../onboarding/actions";
 import { GoogleButton } from "../../src/ui/google-button";
 import { LoginForm } from "./form";
@@ -13,8 +14,11 @@ const MESSAGES: Record<string, string> = {
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ m?: string }> }) {
   const { m } = await searchParams;
   return (
-    <main className="mx-auto max-w-md px-4 py-8">
-      <h1 className="text-3xl font-bold">Open your book</h1>
+    <main className="mx-auto max-w-md px-5 pb-12 pt-8">
+      <a href="/welcome" className="mb-10 inline-block" aria-label="Trustbook home">
+        <Logo />
+      </a>
+      <h1 className="text-3xl">Open your book</h1>
       <p className="mt-2 text-stone-700">Sign in to your Trustbook account.</p>
       {m && MESSAGES[m] && <p className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-amber-900">{MESSAGES[m]}</p>}
       <GoogleButton />

@@ -1,3 +1,4 @@
+import { Logo } from "../../src/ui/logo";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db, schema } from "../../src/db/client";
@@ -20,8 +21,11 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
     }
   }
   return (
-    <main className="mx-auto max-w-md px-4 py-8">
-      <h1 className="text-3xl font-bold">Set up your shop</h1>
+    <main className="mx-auto max-w-md px-5 pb-12 pt-8">
+      <a href="/welcome" className="mb-10 inline-block" aria-label="Trustbook home">
+        <Logo />
+      </a>
+      <h1 className="text-3xl">Set up your shop</h1>
       {owner ? (
         <>
           <p className="mt-2 text-stone-700">Signed in as {owner.email}. Tell Trustbook about your shop.</p>
@@ -32,7 +36,7 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
       ) : (
         <>
           <p className="mt-2 text-stone-700">Trustbook keeps your sales and credit, and learns who pays. First, create your account.</p>
-          <a href="/signup" className="mt-6 block rounded-xl bg-emerald-700 px-4 py-4 text-center text-lg font-semibold text-white">
+          <a href="/signup" className="mt-6 block rounded-full bg-emerald-700 px-4 py-4 text-center text-lg font-semibold text-white">
             Create an account
           </a>
           <p className="mt-4 text-center">

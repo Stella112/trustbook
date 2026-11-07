@@ -40,7 +40,7 @@ export default async function VerifyPage({ searchParams }: { searchParams: Promi
       ) : (
         <div className="inline-block rounded bg-emerald-100 px-2 py-0.5 text-sm font-semibold text-emerald-900">Live shop · real records · customers shown as initials</div>
       )}
-      <h1 className="mt-2 text-3xl font-bold">Verify the books{selected ? `: ${selected.name}` : ""}</h1>
+      <h1 className="mt-2 text-3xl">Verify the books{selected ? `: ${selected.name}` : ""}</h1>
       <p className="mt-2 text-stone-700">
         Trustbook seals each day&apos;s records to Walrus and publishes the newest day&apos;s fingerprint on Sui. This page reads those records back and proves, in your
         browser, that nothing was changed, nothing is missing, and the totals add up.
@@ -54,7 +54,7 @@ export default async function VerifyPage({ searchParams }: { searchParams: Promi
       {!selected ? (
         <p className="mt-6 text-stone-700">No public shop is available.</p>
       ) : !selected.anchor ? (
-        <p className="mt-6 rounded-xl bg-white p-4 text-stone-700 shadow-sm">This shop&apos;s first day has not been sealed yet. Days are sealed each night, so check back tomorrow.</p>
+        <p className="mt-6 rounded-xl bg-white p-4 text-stone-700 border border-stone-200">This shop&apos;s first day has not been sealed yet. Days are sealed each night, so check back tomorrow.</p>
       ) : (
         <Verifier key={selected.id} shopId={selected.id} />
       )}

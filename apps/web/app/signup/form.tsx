@@ -12,7 +12,7 @@ export function SignUpForm() {
       <Field name="password" label="Password" type="password" autoComplete="new-password" error={state.errors.password} hint="At least 8 characters." />
       <Field name="passwordConfirm" label="Type the password again" type="password" autoComplete="new-password" error={state.errors.passwordConfirm} />
       {state.errors.form && <p className="text-red-700">{state.errors.form}</p>}
-      <button type="submit" disabled={pending} className="w-full rounded-xl bg-emerald-700 px-4 py-4 text-lg font-semibold text-white disabled:opacity-60">
+      <button type="submit" disabled={pending} className="w-full rounded-full bg-emerald-700 px-4 py-4 text-lg font-semibold text-white disabled:opacity-60">
         {pending ? "Creating…" : "Create account"}
       </button>
     </form>

@@ -39,7 +39,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
           {saved === "already" ? "That was already saved." : "Saved to your book."}
         </p>
       )}
-      <h1 className="mt-1 text-3xl font-bold">Today</h1>
+      <h1 className="mt-1 text-3xl">Today</h1>
       <p className="text-stone-600">{shortDate(today)}</p>
 
       <section className="mt-4 grid grid-cols-2 gap-3">
@@ -62,7 +62,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
             placeholder="Tunde collect 2 crates egg, 9k, he go pay Friday"
             className="min-w-0 flex-1 rounded-xl border border-stone-300 bg-white px-4 py-3 text-base"
           />
-          <button type="submit" className="rounded-xl bg-emerald-700 px-4 py-3 font-semibold text-white">
+          <button type="submit" className="rounded-full bg-emerald-700 px-4 py-3 font-semibold text-white">
             Go
           </button>
         </form>
@@ -74,7 +74,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
         ) : (
           <ul className="space-y-3">
             {reminders.map((r) => (
-              <li key={r.customerId} className="rounded-xl bg-white p-4 shadow-sm">
+              <li key={r.customerId} className="rounded-xl bg-white p-4 border border-stone-200">
                 <div className="flex items-start justify-between gap-3">
                   <Link href={`/customers/${r.customerId}`} className="text-lg font-semibold underline">
                     {r.name}
@@ -86,7 +86,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
                   {r.emailed ? " · reminded by email this morning" : ""}
                 </p>
                 {r.whatsapp ? (
-                  <a href={r.whatsapp} target="_blank" rel="noopener noreferrer" className="mt-2 block rounded-xl bg-emerald-700 px-4 py-3 text-center font-semibold text-white">
+                  <a href={r.whatsapp} target="_blank" rel="noopener noreferrer" className="mt-2 block rounded-full bg-emerald-700 px-4 py-3 text-center font-semibold text-white">
                     Send reminder on WhatsApp
                   </a>
                 ) : (
@@ -104,7 +104,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
         {todays.length === 0 ? (
           <p className="text-stone-600">Nothing recorded yet today.</p>
         ) : (
-          <ul className="rounded-xl bg-white px-4 shadow-sm">
+          <ul className="rounded-xl bg-white px-4 border border-stone-200">
             {todays.slice(0, 8).map((e) => (
               <EntryLine key={e.id} e={e} book={book} />
             ))}

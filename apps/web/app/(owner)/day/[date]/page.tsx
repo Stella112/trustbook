@@ -18,7 +18,7 @@ export default async function DayPage({ params }: { params: Promise<{ date: stri
   return (
     <>
       <div className="mt-1 flex items-baseline justify-between">
-        <h1 className="text-3xl font-bold">{shortDate(date)}</h1>
+        <h1 className="text-3xl">{shortDate(date)}</h1>
         <div className="flex gap-4 text-sm">
           <Link href={`/day/${prev}`} className="underline">
             ‹ Day before
@@ -40,7 +40,7 @@ export default async function DayPage({ params }: { params: Promise<{ date: stri
         {list.length === 0 ? (
           <p className="text-stone-600">Nothing was recorded on this day.</p>
         ) : (
-          <ul className="rounded-xl bg-white px-4 shadow-sm">
+          <ul className="rounded-xl bg-white px-4 border border-stone-200">
             {list.map((e) => (
               <EntryLine key={e.id} e={e} book={book} />
             ))}

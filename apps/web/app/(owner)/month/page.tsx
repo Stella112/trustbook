@@ -46,7 +46,7 @@ export default async function MonthPage({ searchParams }: { searchParams: Promis
   return (
     <>
       <div className="mt-1 flex items-baseline justify-between">
-        <h1 className="text-3xl font-bold">{label}</h1>
+        <h1 className="text-3xl">{label}</h1>
         <div className="flex gap-4 text-sm">
           <Link href={`/month?m=${prev}`} className="underline">
             ‹ Earlier
@@ -71,7 +71,7 @@ export default async function MonthPage({ searchParams }: { searchParams: Promis
           ) : (
             <form action={closeMonth} className="mt-3">
               <input type="hidden" name="month" value={month} />
-              <button type="submit" className="rounded-xl bg-emerald-700 px-4 py-2 font-semibold text-white">
+              <button type="submit" className="rounded-full bg-emerald-700 px-4 py-2 font-semibold text-white">
                 Close month and save the lesson
               </button>
             </form>
@@ -118,7 +118,7 @@ export default async function MonthPage({ searchParams }: { searchParams: Promis
         {days.length === 0 ? (
           <p className="text-stone-600">No entries this month.</p>
         ) : (
-          <ul className="rounded-xl bg-white px-4 shadow-sm">
+          <ul className="rounded-xl bg-white px-4 border border-stone-200">
             {days.map((d) => (
               <li key={d.date} className="border-b border-stone-100 last:border-0">
                 <Link href={`/day/${d.date}`} className="flex justify-between py-3">
@@ -134,7 +134,7 @@ export default async function MonthPage({ searchParams }: { searchParams: Promis
       </Section>
 
       <Section title="Your records on Walrus">
-        <Suspense fallback={<div className="rounded-xl bg-white p-4 text-stone-600 shadow-sm">Checking storage…</div>}>
+        <Suspense fallback={<div className="rounded-xl bg-white p-4 text-stone-600 border border-stone-200">Checking storage…</div>}>
           <BooksSecured shopId={shop.id} timezone={shop.timezone} />
         </Suspense>
       </Section>

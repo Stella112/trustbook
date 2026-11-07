@@ -22,7 +22,7 @@ export async function BooksSecured({ shopId, timezone }: { shopId: string; timez
   const warn = daysLeft !== null && daysLeft <= RENEW_WARNING_DAYS;
 
   return (
-    <div className={`rounded-xl p-4 shadow-sm ${warn ? "bg-red-50 text-red-900" : "bg-white"}`}>
+    <div className={`rounded-xl p-4 border border-stone-200 ${warn ? "bg-red-50 text-red-900" : "bg-white"}`}>
       {storage?.securedUntil ? (
         <p className="text-lg font-semibold">Books secured on Walrus until {longDate(storage.securedUntil, timezone)}</p>
       ) : (

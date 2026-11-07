@@ -78,7 +78,7 @@ export function Verifier({ shopId }: { shopId: string }) {
         type="button"
         onClick={run}
         disabled={phase === "loading"}
-        className="w-full rounded-xl bg-emerald-700 px-5 py-4 text-lg font-semibold text-white shadow-sm disabled:opacity-60 sm:w-auto"
+        className="w-full rounded-full bg-emerald-700 px-5 py-4 text-lg font-semibold text-white border border-stone-200 disabled:opacity-60 sm:w-auto"
       >
         {phase === "loading" ? (progress.total ? `Reading ${progress.total} records from Walrus…` : "Finding records and reading the Sui anchor…") :phase === "done" ? "Verify again" : "Verify these books"}
       </button>
@@ -94,7 +94,7 @@ export function Verifier({ shopId }: { shopId: string }) {
             {view.description && <p className="mt-1 text-stone-800">{view.description}</p>}
           </section>
 
-          <ol className="mt-4 divide-y divide-stone-200 rounded-xl bg-white shadow-sm">
+          <ol className="mt-4 divide-y divide-stone-200 rounded-xl bg-white border border-stone-200">
             {view.result.steps.map((s, i) => (
               <li key={s.name} className="px-4 py-3">
                 <div className="flex items-start justify-between gap-3">
@@ -117,7 +117,7 @@ export function Verifier({ shopId }: { shopId: string }) {
             ))}
           </ol>
 
-          <section className="mt-6 rounded-xl bg-white p-4 shadow-sm">
+          <section className="mt-6 rounded-xl bg-white p-4 border border-stone-200">
             <h2 className="text-lg font-semibold">Try tampering</h2>
             <p className="text-sm text-stone-700">Damage a copy of the records in this browser and watch the same checks catch it. The real records on Walrus are never touched.</p>
             <div className="mt-3 grid gap-2">
@@ -175,7 +175,7 @@ function Evidence({ index, result, input }: { index: Index; result: RecoveryResu
           </>
         )}
       </p>
-      <ul className="mt-3 divide-y divide-stone-200 rounded-xl bg-white text-sm shadow-sm">
+      <ul className="mt-3 divide-y divide-stone-200 rounded-xl bg-white text-sm border border-stone-200">
         {blobs.map((b) => (
           <li key={b.blobId} className="px-4 py-2">
             <div className="font-semibold">{b.label}</div>

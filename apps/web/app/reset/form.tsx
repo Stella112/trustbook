@@ -19,7 +19,7 @@ export function ResetForm({ token }: { token: string }) {
           </a>
         </p>
       )}
-      <button type="submit" disabled={pending} className="w-full rounded-xl bg-emerald-700 px-4 py-4 text-lg font-semibold text-white disabled:opacity-60">
+      <button type="submit" disabled={pending} className="w-full rounded-full bg-emerald-700 px-4 py-4 text-lg font-semibold text-white disabled:opacity-60">
         {pending ? "Saving…" : "Save new password"}
       </button>
     </form>

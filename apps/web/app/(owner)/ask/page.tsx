@@ -22,7 +22,7 @@ export default async function AskPage({ searchParams }: { searchParams: Promise<
 
   return (
     <>
-      <h1 className="mt-1 text-3xl font-bold">Ask</h1>
+      <h1 className="mt-1 text-3xl">Ask</h1>
       <form action="/ask" method="get" className="mt-4 flex gap-2">
         <input
           name="q"
@@ -32,14 +32,14 @@ export default async function AskPage({ searchParams }: { searchParams: Promise<
           placeholder="Wetin happen on 14 October?"
           className="min-w-0 flex-1 rounded-xl border border-stone-300 bg-white px-4 py-3 text-base"
         />
-        <button type="submit" className="rounded-xl bg-emerald-700 px-4 py-3 font-semibold text-white">
+        <button type="submit" className="rounded-full bg-emerald-700 px-4 py-3 font-semibold text-white">
           Ask
         </button>
       </form>
 
       {error && <p className="mt-4 text-red-700">{error}</p>}
       {result && (
-        <div className="mt-4 rounded-xl bg-white p-4 shadow-sm">
+        <div className="mt-4 rounded-xl bg-white p-4 border border-stone-200">
           <p className="text-lg">{result.text}</p>
           {result.facts.length > 0 && (
             <dl className="mt-3 border-t border-stone-100 pt-2 text-sm">

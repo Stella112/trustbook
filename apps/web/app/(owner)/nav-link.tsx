@@ -10,7 +10,7 @@ export function NavLink({ href, label }: { href: string; label: string }) {
     <Link
       href={href}
       aria-current={active ? "page" : undefined}
-      className={`py-4 text-center text-base font-semibold ${active ? "text-emerald-800" : "text-stone-500"}`}
+      className={`rounded-full py-3 text-center text-[15px] font-medium transition-colors ${active ? "bg-emerald-700 text-white" : "text-stone-600 hover:bg-stone-100"}`}
     >
       {label}
     </Link>
