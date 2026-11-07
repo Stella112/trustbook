@@ -27,15 +27,6 @@ export async function sealShop(shopId: string, opts: { through?: string; log?: L
   const today = localDate(new Date().toISOString(), shop.timezone);
   const through = opts.through && opts.through < today ? opts.through : addDays(today, -1);
 
-  let anchorId = shop.anchorObjectId;
-  let capId = shop.anchorCapId;
-  if (!anchorId || !capId) {
-    const a = await createAnchor(shop.id);
-    [anchorId, capId] = [a.anchorId, a.capId];
-    await db.update(schema.shops).set({ anchorObjectId: anchorId, anchorCapId: capId }).where(eq(schema.shops.id, shop.id));
-    log(`created anchor ${anchorId} (tx ${a.digest})`);
-  }
-
   const [rows, customers, items, sealed] = await Promise.all([
     db.select({ data: schema.entries.data }).from(schema.entries).where(eq(schema.entries.shopId, shop.id)).orderBy(asc(schema.entries.recordedAt)),
     db.select().from(schema.customers).where(eq(schema.customers.shopId, shop.id)),
@@ -54,6 +45,17 @@ export async function sealShop(shopId: string, opts: { through?: string; log?: L
   for (const d of pending) {
     const key = `${d.slice(0, 7)}|${weekStart(d)}`;
     groups.set(key, [...(groups.get(key) ?? []), d]);
+  }
+
+  // The anchor is created with the first day to seal, never for a shop with nothing to store
+  // (a new or test shop would otherwise cost SUI every night for an empty anchor).
+  let anchorId = shop.anchorObjectId;
+  let capId = shop.anchorCapId;
+  if ((!anchorId || !capId) && pending.length > 0) {
+    const a = await createAnchor(shop.id);
+    [anchorId, capId] = [a.anchorId, a.capId];
+    await db.update(schema.shops).set({ anchorObjectId: anchorId, anchorCapId: capId }).where(eq(schema.shops.id, shop.id));
+    log(`created anchor ${anchorId} (tx ${a.digest})`);
   }
 
   const snapshot = {
@@ -98,7 +100,8 @@ export async function sealShop(shopId: string, opts: { through?: string; log?: L
       await tx.insert(schema.sealedDays).values(days.map((d) => ({ shopId: shop.id, date: d.date, hash: d.hash, sealId: id })));
     });
     // Only now, with the write confirmed, does the anchor move forward.
-    const anchorTx = await updateAnchor({ anchorId, capId, lastDay: to, headHashHex: prevHash, dayCount });
+    // Set above whenever there is a day to seal, which there is inside this loop.
+    const anchorTx = await updateAnchor({ anchorId: anchorId!, capId: capId!, lastDay: to, headHashHex: prevHash, dayCount });
     await db.update(schema.seals).set({ anchorTx }).where(eq(schema.seals.id, id));
     log(`  blob ${blobId}; anchor → ${to}, ${dayCount} days (tx ${anchorTx})`);
     sealedBatches.push({ from, to, blobId, anchorTx });

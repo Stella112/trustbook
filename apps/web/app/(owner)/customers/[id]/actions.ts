@@ -7,6 +7,7 @@ import { ulid } from "ulid";
 import { z } from "zod";
 import { db, schema } from "../../../../src/db/client";
 import { loadBook } from "../../../../src/lib/book";
+import { checkPin } from "../../../../src/lib/pin";
 import { queueMemoriesForSaved } from "../../../../src/memory/events";
 import { processOutbox } from "../../../../src/memory/outbox";
 
@@ -23,6 +24,9 @@ export async function markAsPaid(formData: FormData): Promise<void> {
   if (!book.customers.some((c) => c.id === f.customerId)) redirect("/customers");
   const kobo = parseNairaToKobo(f.amount);
   if (!kobo) redirect(`/customers/${f.customerId}?error=amount`);
+  // A money action: the owner's PIN approves it (the demo shop has none).
+  const pin = await checkPin(book.shop, String(formData.get("pin") ?? ""));
+  if (pin !== "ok" && pin !== "not-needed") redirect(`/customers/${f.customerId}?error=pin-${pin}`);
   const now = instantAt(book.today, localTime(new Date().toISOString(), book.shop.timezone), book.shop.timezone);
   const debts = computeDebts(effectiveEntries(book.entries), book.settings, book.today);
   const entry = validateEntry({

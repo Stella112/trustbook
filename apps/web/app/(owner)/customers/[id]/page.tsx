@@ -5,6 +5,7 @@ import { AdviceLoading, CreditAdvice } from "../../../../src/ui/credit-advice";
 import { loadBook } from "../../../../src/lib/book";
 import { appUrl, signPayLink, whatsappLink } from "../../../../src/lib/paylink";
 import { CopyLink } from "../../../../src/ui/copy-link";
+import { PIN_MESSAGES, pinRequired } from "../../../../src/lib/pin";
 import { PayQr } from "../../../../src/ui/qr";
 import { markAsPaid } from "./actions";
 import { EntryLine } from "../../../../src/ui/entry-line";
@@ -70,7 +71,11 @@ export default async function CustomerPage({ params, searchParams }: { params: P
                   <option value="transfer">Transfer</option>
                 </select>
               </div>
+              {pinRequired(book.shop) && (
+                <input name="pin" type="password" inputMode="numeric" maxLength={6} autoComplete="off" required placeholder="Your 6-number PIN" aria-label="Your 6-number PIN" className="mt-2 block w-full rounded-xl border border-stone-300 px-3 py-2" />
+              )}
               {error === "amount" && <p className="mt-1 text-sm text-red-700">Write the amount like 5,000 or 5k.</p>}
+              {error?.startsWith("pin-") && <p className="mt-1 text-sm text-red-700">{PIN_MESSAGES[error.slice(4) as keyof typeof PIN_MESSAGES] ?? PIN_MESSAGES.wrong}</p>}
               <button type="submit" className="mt-2 w-full rounded-xl border border-stone-400 px-4 py-2 font-semibold">
                 Mark as paid
               </button>

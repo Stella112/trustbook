@@ -8,6 +8,7 @@ import { ulid } from "ulid";
 import { z } from "zod";
 import { db, schema } from "../../src/db/client";
 import { hashPin, PIN_PATTERN } from "../../src/lib/auth";
+import { currentOwner } from "../../src/lib/owner";
 import { startSession } from "../../src/lib/shop";
 import { DEMO_SHOP_ID } from "../../src/seed/demo";
 
@@ -45,7 +46,15 @@ const Form = z
 
 const FIELDS = ["shopName", "ownerName", "currency", "openingCash", "suiAddress", "pin", "pinConfirm"] as const;
 
+/** Shop profile setup, after the owner has an account (approved 6 Nov). One shop per owner. */
 export async function createShop(_prev: OnboardingState, formData: FormData): Promise<OnboardingState> {
+  const owner = await currentOwner();
+  if (!owner) redirect("/signup");
+  const [already] = await db.select({ id: schema.shops.id }).from(schema.shops).where(eq(schema.shops.ownerId, owner.id));
+  if (already) {
+    await startSession(already.id);
+    redirect("/");
+  }
   const raw = Object.fromEntries(FIELDS.map((k) => [k, String(formData.get(k) ?? "")]));
   const parsed = Form.safeParse(raw);
   if (!parsed.success) {
@@ -61,6 +70,7 @@ export async function createShop(_prev: OnboardingState, formData: FormData): Pr
   const id = ulid();
   await db.insert(schema.shops).values({
     id,
+    ownerId: owner.id,
     name: parsed.data.shopName,
     ownerName: parsed.data.ownerName,
     currency: parsed.data.currency,

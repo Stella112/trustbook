@@ -1,13 +1,13 @@
 import { buildDraft, parseNote, QuotaError, type Draft } from "@trustbook/agent";
 import { instantAt, localTime } from "@trustbook/ledger";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { AdviceLoading, CreditAdvice } from "../../../src/ui/credit-advice";
 import { ulid } from "ulid";
 import { loadBook } from "../../../src/lib/book";
 import { signDraft } from "../../../src/lib/draft";
-import { confirmDraft } from "./actions";
+import { pinRequired } from "../../../src/lib/pin";
+import { ConfirmForm } from "./confirm-form";
 import { VoiceButton } from "../../../src/ui/voice-button";
 
 const MAX_NOTE = 300;
@@ -90,15 +90,11 @@ export default async function RecordPage({ searchParams }: { searchParams: Promi
         </Suspense>
       )}
       {ready ? (
-        <form action={confirmDraft} className="mt-4 grid grid-cols-2 gap-3">
-          <input type="hidden" name="draft" value={token} />
-          <Link href={`/record?edit=${encodeURIComponent(note)}`} className="rounded-xl border border-stone-400 px-4 py-4 text-center text-lg font-medium">
-            Change
-          </Link>
-          <button type="submit" className="rounded-xl bg-emerald-700 px-4 py-4 text-lg font-semibold text-white">
-            Confirm
-          </button>
-        </form>
+        <ConfirmForm
+          token={token}
+          editHref={`/record?edit=${encodeURIComponent(note)}`}
+          needsPin={pinRequired(book.shop) && draft.entries.some((e) => e.type === "PAYMENT")}
+        />
       ) : (
         <NoteBox note={note} message="Add the missing details and send again." />
       )}

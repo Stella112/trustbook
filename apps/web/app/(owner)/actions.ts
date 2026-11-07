@@ -1,9 +1,9 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { endSession } from "../../src/lib/shop";
+import { signOutOwner } from "../../src/lib/owner";
 
 export async function signOut(): Promise<void> {
-  await endSession();
+  await signOutOwner();
   redirect("/login");
 }

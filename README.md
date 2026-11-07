@@ -15,6 +15,7 @@ Built for **Total Recall — Tatum × Walrus Memory Hackathon**, Track 03 (Consu
 
 | | |
 |---|---|
+| **Accounts** | Owners sign up with email and password or Continue with Google, with password reset by email. A 6-number PIN, set during shop setup, approves money actions such as marking a debt as paid. |
 | **Record** | "Tunde collect 2 crates egg, 9k, he go pay Friday" → a confirmation card → saved only when the owner taps Confirm. Voice notes go through the same card. |
 | **See the business** | Today, This month, a calendar of days, customers sorted by what they owe, CSV export. Totals come from deterministic code; the language model never does arithmetic. |
 | **Ask** | "Wetin happen on 14 October?" Questions are answered from ledger queries; dates are resolved in code, in the shop's timezone. |

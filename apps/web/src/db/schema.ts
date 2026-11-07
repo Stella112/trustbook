@@ -1,8 +1,39 @@
 import { bigint, boolean, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 import type { Entry } from "@trustbook/ledger";
 
+/**
+ * A shop owner's account (approved 6 Nov): sign in with email + password or Google. One owner has
+ * one shop for now. A password and a Google account can both be linked to the same owner.
+ */
+export const owners = pgTable("owners", {
+  id: text("id").primaryKey(),
+  /** Always lower-case. */
+  email: text("email").notNull().unique(),
+  /** scrypt, like the PIN; null for an owner who only uses Google. */
+  passwordHash: text("password_hash"),
+  /** Google's stable user id ("sub"), once linked. */
+  googleSub: text("google_sub").unique(),
+  /** Set when the owner proved the email is theirs: by Google, or by a password-reset link. */
+  emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
+  failedLogins: integer("failed_logins").notNull().default(0),
+  lockedUntil: timestamp("locked_until", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** One-time password-reset links: only a hash of the token is stored; each expires in an hour. */
+export const passwordResets = pgTable("password_resets", {
+  id: text("id").primaryKey(),
+  ownerId: text("owner_id").notNull().references(() => owners.id),
+  tokenHash: text("token_hash").notNull().unique(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  usedAt: timestamp("used_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const shops = pgTable("shops", {
   id: text("id").primaryKey(),
+  /** The owner's account; null for the demo shop. Unique: one shop per owner for now. */
+  ownerId: text("owner_id").unique().references(() => owners.id),
   name: text("name").notNull(),
   ownerName: text("owner_name").notNull(),
   currency: text("currency").notNull().default("NGN"),
