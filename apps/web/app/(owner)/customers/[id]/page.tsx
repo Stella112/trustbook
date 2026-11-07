@@ -209,6 +209,9 @@ export default async function CustomerPage({ params, searchParams }: { params: P
       </Section>
 
       <Section title="History">
+        <a href={`/statement/${id}`} className="mb-3 flex items-center justify-between rounded-xl border border-stone-200 bg-white px-4 py-3 font-medium">
+          Statement to print, save as PDF or share <span aria-hidden>→</span>
+        </a>
         <ul className="rounded-xl bg-white px-4 border border-stone-200">
           {history.map((e) => (
             <EntryLine key={e.id} e={e} book={book} showTime={false} />
