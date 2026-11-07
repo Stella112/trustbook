@@ -1,6 +1,6 @@
 import { summarizePeriod, type PeriodSummary } from "./accounting";
 import { effectiveEntries } from "./corrections";
-import { addDays, byOccurred, localDate } from "./dates";
+import { addDays, byOccurred, daysBetween, localDate } from "./dates";
 import type { DebtState } from "./debts";
 import { trustLabel, type TrustLabel, type TrustResult } from "./trust";
 import type { Entry, PaymentEntry, ReplaceableEntry, SaleEntry, ShopSettings } from "./types";
@@ -119,3 +119,34 @@ export function dayList(entries: readonly Entry[], settings: ShopSettings, from:
   return days;
 }
 
+
+export interface ReminderDue {
+  customerId: string;
+  /** Still owed on debts promised for today. */
+  dueTodayKobo: number;
+  /** Still owed on debts whose promised date has passed. */
+  overdueKobo: number;
+  /** Everything the customer owes, for the reminder's pay link. */
+  owedKobo: number;
+  /** Days since the oldest unpaid promised date, 0 if nothing is overdue. */
+  daysOverdue: number;
+}
+
+/**
+ * Who to remind today: customers with an unpaid debt promised for today, or already overdue.
+ * Promised-today first, then the most overdue. Used by the Today screen and the morning emails.
+ */
+export function remindersDue(state: DebtState, today: string): ReminderDue[] {
+  const by = new Map<string, ReminderDue>();
+  for (const d of state.debts) {
+    if (d.openKobo <= 0 || d.dueDate > today) continue;
+    const r = by.get(d.customerId) ?? { customerId: d.customerId, dueTodayKobo: 0, overdueKobo: 0, owedKobo: state.balances.get(d.customerId)?.owedKobo ?? 0, daysOverdue: 0 };
+    if (d.dueDate === today) r.dueTodayKobo += d.openKobo;
+    else {
+      r.overdueKobo += d.openKobo;
+      r.daysOverdue = Math.max(r.daysOverdue, daysBetween(d.dueDate, today));
+    }
+    by.set(d.customerId, r);
+  }
+  return [...by.values()].sort((a, b) => Number(b.dueTodayKobo > 0) - Number(a.dueTodayKobo > 0) || b.daysOverdue - a.daysOverdue || b.owedKobo - a.owedKobo);
+}

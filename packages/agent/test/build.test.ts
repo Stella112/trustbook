@@ -139,3 +139,14 @@ describe("tolerating blank fields from the model (seen live 7 Nov)", () => {
     expect(Proposal.safeParse({ kind: "record_payment", customerName: "Tunde", amount: "5k", method: null, items: null, clarifications: [] }).success).toBe(true);
   });
 });
+
+describe("new customer phone numbers", () => {
+  it("keeps a phone number given when adding a customer", () => {
+    const d = buildDraft(Proposal.parse({ kind: "add_customer", customerName: "bola", phone: "0803 123 4567", clarifications: [] }), ctx());
+    expect(d.newCustomers).toEqual([{ id: "new1", name: "Bola", phone: "08031234567" }]);
+  });
+  it("ignores text that is not a phone number", () => {
+    const d = buildDraft(Proposal.parse({ kind: "add_customer", customerName: "Bola", phone: "call later", clarifications: [] }), ctx());
+    expect(d.newCustomers).toEqual([{ id: "new1", name: "Bola" }]);
+  });
+});

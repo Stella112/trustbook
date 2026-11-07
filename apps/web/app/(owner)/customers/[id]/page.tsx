@@ -7,14 +7,14 @@ import { appUrl, signPayLink, whatsappLink } from "../../../../src/lib/paylink";
 import { CopyLink } from "../../../../src/ui/copy-link";
 import { PIN_MESSAGES, pinRequired } from "../../../../src/lib/pin";
 import { PayQr } from "../../../../src/ui/qr";
-import { markAsPaid, setLabel } from "./actions";
+import { markAsPaid, setLabel, setPromise, updateContact } from "./actions";
 import { EntryLine } from "../../../../src/ui/entry-line";
 import { LabelBadge, Section, shortDate, Stat } from "../../../../src/ui/kit";
 
 /** One customer: what they owe, how they pay, and their full history. */
-export default async function CustomerPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ paid?: string; error?: string; label?: string }> }) {
+export default async function CustomerPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ paid?: string; error?: string; label?: string; contact?: string; promise?: string }> }) {
   const { id } = await params;
-  const { paid, error, label: labelSaved } = await searchParams;
+  const { paid, error, label: labelSaved, contact, promise } = await searchParams;
   const book = await loadBook();
   const customer = book.customers.find((c) => c.id === id);
   if (!customer) notFound();
@@ -24,6 +24,7 @@ export default async function CustomerPage({ params, searchParams }: { params: P
   const open = book.debts.debts.filter((d) => d.customerId === id && d.openKobo > 0);
   const history = customerHistory(book.entries, id);
   const owed = balance?.owedKobo ?? 0;
+  const nextDue = open.map((d) => d.dueDate).filter((d) => d >= book.today).sort()[0];
   const payUrl = owed > 0 ? `${appUrl()}/p/${signPayLink({ shopId: book.shop.id, customerId: id, amountKobo: owed })}` : "";
   const whatsapp =
     owed > 0 && customer.phone
@@ -46,6 +47,33 @@ export default async function CustomerPage({ params, searchParams }: { params: P
       </section>
       {(balance?.creditKobo ?? 0) > 0 && <p className="mt-2 text-sm text-emerald-800">Holds {formatNaira(balance!.creditKobo)} credit from paying extra.</p>}
       {paid && <p role="status" className="mt-3 rounded-lg bg-emerald-100 px-3 py-2 font-semibold text-emerald-900">Payment saved.</p>}
+      {promise === "saved" && <p role="status" className="mt-3 rounded-lg bg-emerald-100 px-3 py-2 font-semibold text-emerald-900">Promise saved. {customer.name} will show in Today&apos;s reminders on that day.</p>}
+
+      <Section title="Contact">
+        <details id="contact" className="rounded-xl bg-white p-4 shadow-sm" open={!customer.phone || (!!contact && contact !== "saved")}>
+          <summary className="cursor-pointer font-medium">
+            {customer.phone ? `WhatsApp ${customer.phone}` : "No phone number yet"}
+            {customer.email ? ` · ${customer.email}` : ""}
+          </summary>
+          {contact === "saved" && <p className="mt-2 text-sm text-emerald-800">Saved.</p>}
+          {contact && contact !== "saved" && <p className="mt-2 text-sm text-red-700">{contact}</p>}
+          <form action={updateContact} className="mt-3 space-y-2">
+            <input type="hidden" name="customerId" value={id} />
+            <label className="block text-sm font-medium">
+              Phone (WhatsApp)
+              <input name="phone" type="tel" inputMode="tel" defaultValue={customer.phone ?? ""} placeholder="08031234567" className="mt-1 block w-full rounded-xl border border-stone-300 px-3 py-2 text-base" />
+            </label>
+            <label className="block text-sm font-medium">
+              Email (optional)
+              <input name="email" type="email" defaultValue={customer.email ?? ""} placeholder="name@example.com" className="mt-1 block w-full rounded-xl border border-stone-300 px-3 py-2 text-base" />
+              <span className="mt-1 block text-xs font-normal text-stone-600">With an email, Trustbook reminds {customer.name} by email on the day they promised to pay.</span>
+            </label>
+            <button type="submit" className="w-full rounded-xl border border-stone-400 px-4 py-2 font-semibold">
+              Save contact
+            </button>
+          </form>
+        </details>
+      </Section>
 
       {owed > 0 && (
         <Section title="Get paid">
@@ -55,8 +83,24 @@ export default async function CustomerPage({ params, searchParams }: { params: P
                 Send reminder on WhatsApp
               </a>
             ) : (
-              <p className="text-sm text-stone-600">Add a phone number to send WhatsApp reminders.</p>
+              <a href="#contact" className="block text-sm text-stone-600 underline">
+                Add a phone number to send WhatsApp reminders.
+              </a>
             )}
+            <form action={setPromise} className="border-b border-stone-100 pb-3">
+              <input type="hidden" name="customerId" value={id} />
+              <label className="block text-sm font-medium">
+                Promised to pay by
+                <div className="mt-1 flex gap-2">
+                  <input name="promisedDate" type="date" required min={book.today} defaultValue={nextDue ?? ""} className="min-w-0 flex-1 rounded-xl border border-stone-300 px-3 py-2 text-base" />
+                  <button type="submit" className="rounded-xl border border-stone-400 px-4 py-2 font-semibold">
+                    Save
+                  </button>
+                </div>
+              </label>
+              {promise === "bad" && <p className="mt-1 text-sm text-red-700">Pick today or a later date.</p>}
+              <p className="mt-1 text-xs text-stone-600">On that day {customer.name} shows in Today&apos;s reminders{customer.email ? " and gets an email reminder" : ""}.</p>
+            </form>
             <CopyLink url={payUrl} />
             <details className="rounded-xl border border-stone-200 px-3 py-2">
               <summary className="min-h-10 cursor-pointer py-2 font-semibold">Show QR code to scan</summary>

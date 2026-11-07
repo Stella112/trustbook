@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeDebts, customerHistory, customerRows, dayList, daySummary, effectiveEntries, entriesOn, lastPayment, promisesDueOn, topDebtors } from "../src/index";
+import { computeDebts, customerHistory, customerRows, dayList, daySummary, effectiveEntries, entriesOn, lastPayment, promisesDueOn, remindersDue, topDebtors } from "../src/index";
 import { payment, sale, settings } from "./fixtures";
 
 const s1 = sale("2026-11-01", { paid: 0, customerId: "a", promisedDate: "2026-11-03" });
@@ -28,5 +28,22 @@ describe("queries", () => {
     expect(lastPayment(all, "a")?.id).toBe(p.id);
     expect(lastPayment(all, "b")).toBeNull();
     expect(customerHistory(all, "a").map((e) => e.id)).toEqual([p.id, s1.id]);
+  });
+});
+
+describe("reminders due", () => {
+  it("lists promised-today first, then the most overdue, and skips paid and future debts", () => {
+    const due = [
+      sale("2026-11-01", { paid: 0, customerId: "today", promisedDate: "2026-11-06" }),
+      sale("2026-10-01", { paid: 0, customerId: "late", promisedDate: "2026-10-20" }),
+      sale("2026-11-01", { paid: 0, customerId: "future", promisedDate: "2026-11-09" }),
+      sale("2026-11-01", { paid: 0, customerId: "paid", promisedDate: "2026-11-06" }),
+      payment("2026-11-05", "paid", 100_000),
+    ];
+    const r = remindersDue(computeDebts(effectiveEntries(due), settings, "2026-11-06"), "2026-11-06");
+    expect(r.map((x) => [x.customerId, x.dueTodayKobo, x.overdueKobo, x.daysOverdue])).toEqual([
+      ["today", 100_000, 0, 0],
+      ["late", 0, 100_000, 17],
+    ]);
   });
 });

@@ -16,6 +16,8 @@ import type { Proposal } from "./proposal";
 export interface Known {
   id: string;
   name: string;
+  /** Only for a new customer whose note gave a phone number. */
+  phone?: string | null;
 }
 
 export interface BuildContext {
@@ -246,7 +248,7 @@ export function buildDraft(p: Proposal, ctx: BuildContext): Draft {
         const { match } = matchName(p.customerName, ctx.customers);
         if (match && norm(match.name) === norm(p.customerName)) d.questions.push(`${match.name} is already a customer.`);
         else {
-          d.newCustomers.push({ id: ctx.newId(), name: titleCase(p.customerName) });
+          d.newCustomers.push({ id: ctx.newId(), name: titleCase(p.customerName), ...(p.phone && /^\+?[\d\s()-]{10,20}$/.test(p.phone) ? { phone: p.phone.replace(/[\s()-]/g, "") } : {}) });
           d.lines.push(`Add customer ${titleCase(p.customerName)}${p.phone ? ` · ${p.phone}` : ""}`);
         }
       }

@@ -32,7 +32,7 @@ export async function confirmDraft(_prev: ConfirmState, formData: FormData): Pro
   }
   try {
     await db.transaction(async (tx) => {
-      if (draft.newCustomers.length) await tx.insert(schema.customers).values(draft.newCustomers.map((c) => ({ id: c.id, shopId: shop.id, name: c.name })));
+      if (draft.newCustomers.length) await tx.insert(schema.customers).values(draft.newCustomers.map((c) => ({ id: c.id, shopId: shop.id, name: c.name, phone: c.phone ?? null })));
       if (draft.newItems.length) await tx.insert(schema.items).values(draft.newItems.map((i) => ({ id: i.id, shopId: shop.id, name: i.name })));
       if (entries.length)
         await tx.insert(schema.entries).values(

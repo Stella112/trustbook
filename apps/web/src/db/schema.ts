@@ -60,6 +60,8 @@ export const customers = pgTable(
     shopId: text("shop_id").notNull().references(() => shops.id),
     name: text("name").notNull(),
     phone: text("phone"),
+    /** Optional: lets Trustbook email the customer a reminder on the day they promised to pay. */
+    email: text("email"),
     /** Owner's manual trust label, if set. Also written to behaviour memory in Phase 3. */
     labelOverride: text("label_override", { enum: ["New", "Good payer", "Sometimes late", "Careful"] }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -77,6 +79,22 @@ export const items = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [uniqueIndex("items_shop_name_idx").on(t.shopId, t.name)],
+);
+
+/**
+ * Reminders already sent, so the daily job never sends the same one twice. `customerId` is "owner"
+ * for the owner's morning summary.
+ */
+export const remindersSent = pgTable(
+  "reminders_sent",
+  {
+    shopId: text("shop_id").notNull().references(() => shops.id),
+    customerId: text("customer_id").notNull(),
+    date: text("date").notNull(),
+    channel: text("channel", { enum: ["email"] }).notNull(),
+    sentAt: timestamp("sent_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("reminders_sent_once").on(t.shopId, t.customerId, t.date, t.channel)],
 );
 
 /**

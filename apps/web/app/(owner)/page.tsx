@@ -1,7 +1,11 @@
-import { daySummary, entriesOn, formatNaira, promisesDueOn } from "@trustbook/ledger";
+import { daySummary, entriesOn, formatNaira, remindersDue } from "@trustbook/ledger";
+import { and, eq } from "drizzle-orm";
 import Link from "next/link";
 import { Suspense } from "react";
+import { db, schema } from "../../src/db/client";
 import { loadBook } from "../../src/lib/book";
+import { appUrl, signPayLink, whatsappLink } from "../../src/lib/paylink";
+import { reminderMessage } from "../../src/lib/reminder";
 import { LessonTip } from "../../src/ui/lesson-tip";
 import { EntryLine } from "../../src/ui/entry-line";
 import { Section, shortDate, Stat } from "../../src/ui/kit";
@@ -13,7 +17,20 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
   const { entries, settings, today, debts } = book;
   const day = daySummary(entries, settings, today);
   const todays = entriesOn(entries, settings, today).reverse();
-  const due = promisesDueOn(debts, today);
+  // Reminders due: promised for today, or overdue. One tap opens WhatsApp on the owner's phone with
+  // the message and a pay link; customers with an email are also reminded automatically each morning.
+  const due = remindersDue(debts, today);
+  const emailed = new Set(
+    (await db.select({ customerId: schema.remindersSent.customerId }).from(schema.remindersSent).where(and(eq(schema.remindersSent.shopId, book.shop.id), eq(schema.remindersSent.date, today)))).map(
+      (r) => r.customerId,
+    ),
+  );
+  const reminders = due.map((r) => {
+    const customer = book.customers.find((c) => c.id === r.customerId);
+    const payUrl = `${appUrl()}/p/${signPayLink({ shopId: book.shop.id, customerId: r.customerId, amountKobo: r.owedKobo })}`;
+    const message = reminderMessage({ customerName: customer?.name ?? "there", shopName: book.shop.name, due: r, payUrl });
+    return { ...r, name: customer?.name ?? "Unknown customer", whatsapp: customer?.phone ? whatsappLink(customer.phone, message) : null, emailed: emailed.has(r.customerId) };
+  });
 
   return (
     <>
@@ -51,19 +68,32 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
         </form>
       </Section>
 
-      <Section title="Promised for today">
-        {due.length === 0 ? (
-          <p className="text-stone-600">Nobody promised to pay today.</p>
+      <Section title={`Reminders due${reminders.length ? ` (${reminders.length})` : ""}`}>
+        {reminders.length === 0 ? (
+          <p className="text-stone-600">Nobody is due to pay today, and nobody is late.</p>
         ) : (
-          <ul className="rounded-xl bg-white px-4 shadow-sm">
-            {due.map((d) => (
-              <li key={d.saleId} className="flex justify-between border-b border-stone-100 py-3 last:border-0">
-                <Link href={`/customers/${d.customerId}`} className="font-medium underline">
-                  {book.customerName(d.customerId)}
-                </Link>
-                <span className={d.status === "paid" ? "text-emerald-800" : "text-amber-800"}>
-                  {d.status === "paid" ? "Paid" : `${formatNaira(d.openKobo)} still owed`}
-                </span>
+          <ul className="space-y-3">
+            {reminders.map((r) => (
+              <li key={r.customerId} className="rounded-xl bg-white p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <Link href={`/customers/${r.customerId}`} className="text-lg font-semibold underline">
+                    {r.name}
+                  </Link>
+                  <span className="text-right font-semibold">{formatNaira(r.dueTodayKobo + r.overdueKobo)}</span>
+                </div>
+                <p className={`text-sm ${r.dueTodayKobo > 0 ? "text-amber-800" : "text-red-700"}`}>
+                  {r.dueTodayKobo > 0 ? "Promised to pay today" : `${r.daysOverdue} day${r.daysOverdue === 1 ? "" : "s"} late`}
+                  {r.emailed ? " · reminded by email this morning" : ""}
+                </p>
+                {r.whatsapp ? (
+                  <a href={r.whatsapp} target="_blank" rel="noopener noreferrer" className="mt-2 block rounded-xl bg-emerald-700 px-4 py-3 text-center font-semibold text-white">
+                    Send reminder on WhatsApp
+                  </a>
+                ) : (
+                  <Link href={`/customers/${r.customerId}#contact`} className="mt-2 block text-sm text-stone-600 underline">
+                    Add {r.name}&apos;s phone number to remind them on WhatsApp
+                  </Link>
+                )}
               </li>
             ))}
           </ul>
