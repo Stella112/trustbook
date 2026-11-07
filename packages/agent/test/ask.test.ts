@@ -40,3 +40,22 @@ describe("answers built only from ledger data", () => {
     expect(answer({ intent: "day_summary", datePhrase: "when rain fall" }, ctx).text).toMatch(/could not tell which day/);
   });
 });
+
+describe("money questions added 7 Nov", () => {
+  it("warns before more credit to a customer with an overdue debt", () => {
+    const a = answer({ intent: "credit_check", customerName: "Tunde", amountPhrase: "20k" }, ctx);
+    expect(a.text).toMatch(/^Be careful giving Tunde ₦20,000 credit: ₦6,000 is already overdue/);
+    expect(a.text).toMatch(/You decide\.$/);
+  });
+  it("says what is safe to restock from cash minus supplier debt", () => {
+    const a = answer({ intent: "restock" }, ctx);
+    expect(a.facts[0]).toEqual({ label: "Safe to restock", value: "₦7,500" });
+  });
+  it("says when no supplier is owed", () => {
+    expect(answer({ intent: "supplier_owed" }, ctx).text).toBe("You don't owe any supplier.");
+  });
+  it("names best sellers with the shop's item names", () => {
+    const a = answer({ intent: "best_products", periodPhrase: "last month" }, { ...ctx, itemName: () => "Crate of eggs" });
+    expect(a.text).toMatch(/^Your best sellers: Crate of eggs ₦13,500 \(no cost price/);
+  });
+});

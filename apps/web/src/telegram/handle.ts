@@ -109,7 +109,7 @@ export async function handleUpdate(raw: unknown): Promise<Handled> {
   if (proposal.kind === "ask_question") {
     try {
       const intent = await routeQuestion(proposal.question || note);
-      const a = answer(intent, { entries: book.entries, settings: book.settings, today: book.today, debts: book.debts, customers: book.customers });
+      const a = answer(intent, { entries: book.entries, settings: book.settings, today: book.today, debts: book.debts, customers: book.customers, itemName: book.itemName });
       await send(chatId, [a.text, ...a.facts.map((f) => `• ${f.label}: ${f.value}`), "", "Numbers come straight from your book."].join("\n"));
     } catch (err) {
       await send(chatId, err instanceof QuotaError ? err.message : "Something went wrong. Please try again.");

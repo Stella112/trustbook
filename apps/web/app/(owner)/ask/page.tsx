@@ -2,7 +2,7 @@ import { answer, QuotaError, routeQuestion, type Answer } from "@trustbook/agent
 import Link from "next/link";
 import { loadBook } from "../../../src/lib/book";
 
-const EXAMPLES = ["Wetin happen yesterday?", "How market dey this month?", "Who owe me pass?", "Who don late?", "How much Tunde owe me?", "Which day I sell pass last month?"];
+const EXAMPLES = ["Wetin happen yesterday?", "How market dey this month?", "Who owe me pass?", "Who don late?", "Who I owe for supplier?", "How much I fit spend on stock?", "I don get my capital back?", "Which goods dey sell pass?", "Who be my best payers?", "Can I give Tunde 20k credit?"];
 
 /** Ask: Gemini picks the question type; the answer and every number come from the ledger. */
 export default async function AskPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
@@ -14,7 +14,7 @@ export default async function AskPage({ searchParams }: { searchParams: Promise<
     const book = await loadBook();
     try {
       const intent = await routeQuestion(question);
-      result = answer(intent, { entries: book.entries, settings: book.settings, today: book.today, debts: book.debts, customers: book.customers });
+      result = answer(intent, { entries: book.entries, settings: book.settings, today: book.today, debts: book.debts, customers: book.customers, itemName: book.itemName });
     } catch (err) {
       error = err instanceof QuotaError ? err.message : "Something went wrong. Please try again.";
     }
