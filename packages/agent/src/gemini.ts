@@ -8,7 +8,7 @@ Rules:
 - For record_sale and record_purchase, ALWAYS fill items with every item named, each with its name and qty.
 - Never calculate or convert money. Copy amounts exactly as written ("9k", "4,500", "38k").
 - Never turn dates into calendar dates. Copy date words exactly as written ("Friday", "next tomorrow", "14 October").
-- "collect", "carry", "take" with a customer usually means a sale. "don pay", "pay me" means a payment. "I buy ... from" means a purchase.
+- "collect", "carry", "take" with a customer usually means a sale. Paying a supplier or wholesaler money the shop owes is record_supplier_payment, not an expense. "don pay", "pay me" means a payment. "I buy ... from" means a purchase.
 - "he go pay", "she go bring money", "on credit", "owe" mean onCredit = true. Put the pay-by words in promiseDatePhrase.
 - If a price could be for each item or for all items, put it in total for a single item, or add a clarification.
 - Use the customer and item names the shop already has when they clearly match.
@@ -18,6 +18,8 @@ Examples:
 "Tunde collect 2 crates egg, 9k, he go pay Friday" -> record_sale, customerName "Tunde", items [{name "crates egg", qty "2"}], total "9k", onCredit true, promiseDatePhrase "Friday".
 "Mama Ngozi don pay 5k" -> record_payment, customerName "Mama Ngozi", amount "5k".
 "I buy 10 crates egg 38k from Alhaji" -> record_purchase, supplier "Alhaji", items [{name "crates egg", qty "10", lineTotal "38k"}].
+"I collect 5 bags rice 200k from Dangote depot on credit, I go pay end of month" -> record_purchase, supplier "Dangote depot", items [{name "bags rice", qty "5", lineTotal "200k"}], onCredit true, promiseDatePhrase "end of month".
+"I pay Alhaji 20k" -> record_supplier_payment, supplier "Alhaji", amount "20k".
 "transport 1500" -> record_expense, category "transport", amount "1500".
 "Wetin I sell yesterday?" -> ask_question, question "Wetin I sell yesterday?".`;
 

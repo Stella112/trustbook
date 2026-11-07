@@ -219,8 +219,24 @@ export function buildDraft(p: Proposal, ctx: BuildContext): Draft {
       const paid = p.onCredit ? 0 : p.paidNow ? money(p.paidNow, "the part paid now") : total;
       for (const l of ls) d.lines.push(`Bought ${l.qty} × ${l.name} at ${formatNaira(l.unitKobo)} each`);
       d.lines.push(`Total ${formatNaira(total)}${p.supplier ? ` from ${p.supplier}` : ""}${paid !== null && paid < total ? ` · ${formatNaira(total - paid)} still owed to supplier` : " · paid"}`);
+      // When the unpaid part is due to the supplier, if the note says so.
+      let dueDate: string | undefined;
+      if (paid !== null && paid < total && p.promiseDatePhrase) {
+        dueDate = resolveDate(p.promiseDatePhrase, today, "future") ?? undefined;
+        if (!dueDate) d.questions.push(`Which date is "${p.promiseDatePhrase}"?`);
+        else d.lines.push(`To pay the supplier by ${dueDate}`);
+      }
       if (!d.questions.length && paid !== null)
-        d.entries.push({ ...base(), type: "PURCHASE", items: ls.map((l) => ({ itemId: l.itemId, qty: l.qty, unitCostKobo: l.unitKobo })), totalKobo: total, supplier: p.supplier, paidNowKobo: paid });
+        d.entries.push({ ...base(), type: "PURCHASE", items: ls.map((l) => ({ itemId: l.itemId, qty: l.qty, unitCostKobo: l.unitKobo })), totalKobo: total, supplier: p.supplier, paidNowKobo: paid, ...(dueDate ? { dueDate } : {}) });
+      break;
+    }
+    case "record_supplier_payment": {
+      // Paying money the shop owes a supplier: it lowers that debt and is not a new purchase or expense.
+      const amount = money(p.amount ?? p.total, "the payment to the supplier");
+      if (amount === null && !d.questions.length) d.questions.push("How much did you pay the supplier?");
+      if (!p.supplier) d.questions.push("Which supplier did you pay?");
+      if (amount !== null && p.supplier) d.lines.push(`Paid ${p.supplier} ${formatNaira(amount)} towards what you owe them`);
+      if (!d.questions.length && amount !== null && p.supplier) d.entries.push({ ...base(), type: "SUPPLIER_PAYMENT", supplier: p.supplier, amountKobo: amount, note: p.note ?? "" });
       break;
     }
     case "record_expense": {

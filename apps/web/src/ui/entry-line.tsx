@@ -4,7 +4,7 @@ import { timeOf } from "./kit";
 
 /** One ledger entry in plain words, e.g. "Sale · Tunde · 2 × Eggs (crate) · ₦9,000 · ₦9,000 on credit". */
 export function EntryLine({ e, book, showTime = true }: { e: ReplaceableEntry; book: Book; showTime?: boolean }) {
-  const { title, detail, amount, tone } = describe(e, book);
+  const { title, detail, amount, tone } = describeEntry(e, book);
   return (
     <li className="flex items-start justify-between gap-3 border-b border-stone-100 py-3 last:border-0">
       <div>
@@ -19,7 +19,7 @@ export function EntryLine({ e, book, showTime = true }: { e: ReplaceableEntry; b
   );
 }
 
-function describe(e: ReplaceableEntry, book: Book): { title: string; detail?: string; amount: string; tone?: "in" | "out" } {
+export function describeEntry(e: ReplaceableEntry, book: Book): { title: string; detail?: string; amount: string; tone?: "in" | "out" } {
   switch (e.type) {
     case "SALE": {
       const credit = e.totalKobo - e.paidNowKobo;

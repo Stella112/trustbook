@@ -4,7 +4,7 @@ import { z } from "zod";
  * What the language model proposes from an owner's note. Numbers come back as text ("9k", "4,500")
  * and dates as phrases ("Friday"), so money and dates are always worked out in code, never by the model.
  */
-export const KINDS = ["record_sale", "record_payment", "record_purchase", "record_expense", "add_promise", "add_customer", "ask_question", "unclear"] as const;
+export const KINDS = ["record_sale", "record_payment", "record_purchase", "record_supplier_payment", "record_expense", "add_promise", "add_customer", "ask_question", "unclear"] as const;
 
 const Item = z.object({
   name: z.string().min(1),
@@ -90,7 +90,7 @@ export const proposalJsonSchema = {
     supplier: { type: "string" },
     category: { type: "string", description: "Expense category, e.g. transport, rent, levy" },
     note: { type: "string" },
-    promiseDatePhrase: { type: "string", description: "When the customer said they will pay, as written, e.g. 'Friday'" },
+    promiseDatePhrase: { type: "string", description: "When the customer said they will pay, or when the shop will pay the supplier, as written, e.g. 'Friday'" },
     whenPhrase: { type: "string", description: "When it happened, only if not today, as written, e.g. 'yesterday'" },
     phone: { type: "string" },
     question: { type: "string", description: "For ask_question: the question" },

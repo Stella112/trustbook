@@ -10,7 +10,7 @@ export default async function CustomersPage() {
   const owed = rows.reduce((s, r) => s + r.owedKobo, 0);
   return (
     <>
-      <h1 className="mt-1 text-3xl">Customers</h1>
+      <h1 className="mt-1 text-3xl">Credit Book</h1>
       <p className="text-stone-600">
         {rows.length} customers · {formatNaira(owed)} owed to you
       </p>

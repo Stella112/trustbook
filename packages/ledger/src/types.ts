@@ -47,6 +47,8 @@ export const PurchaseEntry = z.object({
   totalKobo: Minor,
   supplier: z.string().min(1).optional(),
   paidNowKobo: Minor,
+  /** When the unpaid part is due to the supplier (approved 7 Nov: supplier payables). */
+  dueDate: LocalDate.optional(),
 });
 
 export const ExpenseEntry = z.object({

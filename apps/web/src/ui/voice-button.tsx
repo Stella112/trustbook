@@ -57,7 +57,7 @@ export function VoiceButton() {
 
   const busy = state === "reading";
   return (
-    <div className="mt-3">
+    <div id="voice" className="mt-3 scroll-mt-24">
       <button
         type="button"
         disabled={busy}

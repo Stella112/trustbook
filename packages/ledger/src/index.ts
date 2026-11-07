@@ -9,3 +9,5 @@ export * from "./money";
 export * from "./queries";
 export * from "./when";
 export * from "./csv";
+export * from "./suppliers";
+export * from "./capital";

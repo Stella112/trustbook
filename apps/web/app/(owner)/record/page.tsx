@@ -93,7 +93,7 @@ export default async function RecordPage({ searchParams }: { searchParams: Promi
         <ConfirmForm
           token={token}
           editHref={`/record?edit=${encodeURIComponent(note)}`}
-          needsPin={pinRequired(book.shop) && draft.entries.some((e) => e.type === "PAYMENT")}
+          needsPin={pinRequired(book.shop) && draft.entries.some((e) => e.type === "PAYMENT" || e.type === "SUPPLIER_PAYMENT")}
         />
       ) : (
         <NoteBox note={note} message="Add the missing details and send again." />
@@ -106,6 +106,7 @@ const KIND_TITLE: Record<Draft["kind"], string> = {
   record_sale: "Sale",
   record_payment: "Payment",
   record_purchase: "Stock bought",
+  record_supplier_payment: "Paid supplier",
   record_expense: "Expense",
   add_promise: "Promise to pay",
   add_customer: "New customer",

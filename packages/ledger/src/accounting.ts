@@ -176,3 +176,39 @@ export function monthSummary(entries: readonly Entry[], settings: ShopSettings, 
   const to = asOf && asOf < range.to ? asOf : range.to;
   return { month, period: summarizePeriod(entries, settings, range.from, to), position: positionAt(entries, settings, to) };
 }
+
+export interface ProductProfit {
+  itemId: string;
+  qtyMilli: number;
+  revenueKobo: number;
+  /** Null when any sale of this item had no cost price recorded before it. */
+  cogsKobo: number | null;
+  grossProfitKobo: number | null;
+}
+
+/**
+ * Profit per product in a period (approved 7 Nov: Capital & Profit), using the same weighted-average
+ * cost rule as COGS. A product with any sale lacking a known cost shows no profit, never a guess.
+ */
+export function productProfit(entries: readonly Entry[], settings: ShopSettings, from: string, to: string): ProductProfit[] {
+  const eff = effectiveEntries(entries);
+  const purchases = eff.filter((e): e is PurchaseEntry => e.type === "PURCHASE");
+  const rows = new Map<string, { qtyMilli: number; revenueKobo: number; cogsKobo: number; complete: boolean }>();
+  for (const e of eff) {
+    if (e.type !== "SALE") continue;
+    const d = localDate(e.occurredAt, settings.timezone);
+    if (d < from || d > to) continue;
+    for (const line of e.items) {
+      const r = rows.get(line.itemId) ?? { qtyMilli: 0, revenueKobo: 0, cogsKobo: 0, complete: true };
+      r.qtyMilli += milli(line.qty);
+      r.revenueKobo += lineTotal(line.qty, line.unitPriceKobo);
+      const basis = costBasis(purchases, line.itemId, e);
+      if (basis.qtyMilli === 0) r.complete = false;
+      else r.cogsKobo += mulDivRound(milli(line.qty), basis.costKobo, basis.qtyMilli);
+      rows.set(line.itemId, r);
+    }
+  }
+  return [...rows]
+    .map(([itemId, r]) => ({ itemId, qtyMilli: r.qtyMilli, revenueKobo: r.revenueKobo, cogsKobo: r.complete ? r.cogsKobo : null, grossProfitKobo: r.complete ? r.revenueKobo - r.cogsKobo : null }))
+    .sort((a, b) => b.revenueKobo - a.revenueKobo);
+}

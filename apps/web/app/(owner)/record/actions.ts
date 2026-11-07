@@ -22,7 +22,7 @@ export async function confirmDraft(_prev: ConfirmState, formData: FormData): Pro
   if (!shop) redirect("/login");
   const draft = readDraft(String(formData.get("draft") ?? ""));
   if (!draft || draft.shopId !== shop.id) redirect("/record?error=expired");
-  if (draft.entries.some((e) => e.type === "PAYMENT")) {
+  if (draft.entries.some((e) => e.type === "PAYMENT" || e.type === "SUPPLIER_PAYMENT")) {
     const pin = await checkPin(shop, String(formData.get("pin") ?? ""));
     if (pin !== "ok" && pin !== "not-needed") return { error: PIN_MESSAGES[pin] };
   }

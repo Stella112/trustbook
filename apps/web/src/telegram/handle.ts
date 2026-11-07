@@ -127,7 +127,7 @@ export async function handleUpdate(raw: unknown): Promise<Handled> {
     return {};
   }
   // Money received needs the owner's PIN, which a chat button cannot ask for safely: approve in the app.
-  if (shop.pinHash && draft.entries.some((e) => e.type === "PAYMENT")) {
+  if (shop.pinHash && draft.entries.some((e) => e.type === "PAYMENT" || e.type === "SUPPLIER_PAYMENT")) {
     await send(chatId, `${card}\n\nPayments need your PIN. Open Trustbook to approve this one.`, [[{ text: "Approve in Trustbook", url: `${appUrl()}/record?text=${encodeURIComponent(note)}` }]]);
     return {};
   }
