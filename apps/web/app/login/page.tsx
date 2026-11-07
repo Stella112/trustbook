@@ -15,7 +15,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const { m } = await searchParams;
   return (
     <main className="mx-auto max-w-md px-5 pb-12 pt-8">
-      <a href="/welcome" className="mb-10 inline-block" aria-label="Trustbook home">
+      <a href="/" className="mb-10 inline-block" aria-label="Trustbook home">
         <Logo />
       </a>
       <h1 className="text-3xl">Open your book</h1>

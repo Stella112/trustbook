@@ -79,7 +79,7 @@ export default async function MonthPage({ searchParams }: { searchParams: Promis
         </section>
       )}
 
-      <section className="mt-4 grid grid-cols-2 gap-3">
+      <section className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
         <Stat label="Sales" value={formatNaira(period.revenueKobo)} note={`${period.salesCount} sales`} />
         <Stat
           label="Profit after expenses"
@@ -97,7 +97,7 @@ export default async function MonthPage({ searchParams }: { searchParams: Promis
       )}
 
       <Section title="Money on credit">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <Stat label="Given this month" value={formatNaira(credit)} />
           <Stat label="Owed to you now" value={formatNaira(position.receivablesKobo)} />
           <Stat label="Overdue" value={formatNaira(position.overdueKobo)} tone={position.overdueKobo > 0 ? "warn" : undefined} />
@@ -106,7 +106,7 @@ export default async function MonthPage({ searchParams }: { searchParams: Promis
       </Section>
 
       <Section title="Where you stand">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <Stat label="Cash in the shop" value={formatNaira(position.cashOnHandKobo)} />
           <Stat label="In Sui wallet" value={formatNaira(position.suiWalletKobo)} />
           <Stat label="Stock value" value={formatNaira(position.stockValueKobo)} />

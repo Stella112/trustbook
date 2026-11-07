@@ -49,7 +49,7 @@ export async function confirmDraft(_prev: ConfirmState, formData: FormData): Pro
     });
   } catch (err) {
     // A second tap on Confirm hits the same ids; the first save already went through.
-    if (String((err as { code?: string }).code ?? (err as { cause?: { code?: string } }).cause?.code) === "23505") redirect("/?saved=already");
+    if (String((err as { code?: string }).code ?? (err as { cause?: { code?: string } }).cause?.code) === "23505") redirect("/today?saved=already");
     throw err;
   }
   // Memories are written after the owner's screen has moved on: a Walrus write takes 20–30 seconds.
@@ -62,5 +62,5 @@ export async function confirmDraft(_prev: ConfirmState, formData: FormData): Pro
       console.error("memory outbox:", err instanceof Error ? err.message : err);
     }
   });
-  redirect("/?saved=1");
+  redirect("/today?saved=1");
 }

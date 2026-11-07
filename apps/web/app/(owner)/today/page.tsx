@@ -2,13 +2,13 @@ import { daySummary, entriesOn, formatNaira, remindersDue } from "@trustbook/led
 import { and, eq } from "drizzle-orm";
 import Link from "next/link";
 import { Suspense } from "react";
-import { db, schema } from "../../src/db/client";
-import { loadBook } from "../../src/lib/book";
-import { appUrl, signPayLink, whatsappLink } from "../../src/lib/paylink";
-import { reminderMessage } from "../../src/lib/reminder";
-import { LessonTip } from "../../src/ui/lesson-tip";
-import { EntryLine } from "../../src/ui/entry-line";
-import { Section, shortDate, Stat } from "../../src/ui/kit";
+import { db, schema } from "../../../src/db/client";
+import { loadBook } from "../../../src/lib/book";
+import { appUrl, signPayLink, whatsappLink } from "../../../src/lib/paylink";
+import { reminderMessage } from "../../../src/lib/reminder";
+import { LessonTip } from "../../../src/ui/lesson-tip";
+import { EntryLine } from "../../../src/ui/entry-line";
+import { Section, shortDate, Stat } from "../../../src/ui/kit";
 
 /** Today: what came in, what went out on credit, and who promised to pay today. */
 export default async function TodayPage({ searchParams }: { searchParams: Promise<{ saved?: string }> }) {
@@ -42,7 +42,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
       <h1 className="mt-1 text-3xl">Today</h1>
       <p className="text-stone-600">{shortDate(today)}</p>
 
-      <section className="mt-4 grid grid-cols-2 gap-3">
+      <section className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
         <Stat label="Sales" value={formatNaira(day.revenueKobo)} note={`${day.salesCount} sale${day.salesCount === 1 ? "" : "s"}`} />
         <Stat label="Given on credit" value={formatNaira(day.creditGivenKobo)} />
         <Stat label="Money collected" value={formatNaira(day.cashCollectedKobo)} tone="good" />

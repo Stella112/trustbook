@@ -11,8 +11,8 @@ import { currentShop } from "./shop";
  */
 export const loadBook = cache(async () => {
   const shop = await currentShop();
-  // Signed-out visitors see the landing page, which links to sign-in and the demo shop.
-  if (!shop) redirect("/welcome");
+  // Signed-out visitors on an app screen are asked to sign in.
+  if (!shop) redirect("/login");
   const [rows, customers, items] = await Promise.all([
     db.select({ data: schema.entries.data }).from(schema.entries).where(eq(schema.entries.shopId, shop.id)).orderBy(asc(schema.entries.occurredAt)),
     db.select().from(schema.customers).where(eq(schema.customers.shopId, shop.id)).orderBy(asc(schema.customers.name)),

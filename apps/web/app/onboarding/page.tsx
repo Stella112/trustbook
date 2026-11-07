@@ -17,12 +17,12 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
     const [shop] = await db.select({ id: schema.shops.id }).from(schema.shops).where(eq(schema.shops.ownerId, owner.id));
     if (shop) {
       await startSession(shop.id);
-      redirect("/");
+      redirect("/today");
     }
   }
   return (
     <main className="mx-auto max-w-md px-5 pb-12 pt-8">
-      <a href="/welcome" className="mb-10 inline-block" aria-label="Trustbook home">
+      <a href="/" className="mb-10 inline-block" aria-label="Trustbook home">
         <Logo />
       </a>
       <h1 className="text-3xl">Set up your shop</h1>

@@ -30,7 +30,7 @@ export default async function DayPage({ params }: { params: Promise<{ date: stri
           )}
         </div>
       </div>
-      <section className="mt-4 grid grid-cols-2 gap-3">
+      <section className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
         <Stat label="Sales" value={formatNaira(s.revenueKobo)} note={`${s.salesCount} sales`} />
         <Stat label="Given on credit" value={formatNaira(s.creditGivenKobo)} />
         <Stat label="Money collected" value={formatNaira(s.cashCollectedKobo)} tone="good" />

@@ -31,7 +31,7 @@ export async function currentOwner() {
  * Signs the owner in and, if they already have a shop, opens it. Returns where to go next: the
  * shop's Today screen, or profile setup for a new owner.
  */
-export async function signInOwner(ownerId: string): Promise<"/" | "/onboarding"> {
+export async function signInOwner(ownerId: string): Promise<"/today" | "/onboarding"> {
   (await cookies()).set(OWNER_COOKIE, createSession(ownerId), cookieOptions);
   await db.update(schema.owners).set({ failedLogins: 0, lockedUntil: null }).where(eq(schema.owners.id, ownerId));
   const [shop] = await db.select({ id: schema.shops.id }).from(schema.shops).where(eq(schema.shops.ownerId, ownerId));
@@ -41,7 +41,7 @@ export async function signInOwner(ownerId: string): Promise<"/" | "/onboarding">
     return "/onboarding";
   }
   await startSession(shop.id);
-  return "/";
+  return "/today";
 }
 
 export async function signOutOwner() {

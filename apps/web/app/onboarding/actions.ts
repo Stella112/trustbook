@@ -53,7 +53,7 @@ export async function createShop(_prev: OnboardingState, formData: FormData): Pr
   const [already] = await db.select({ id: schema.shops.id }).from(schema.shops).where(eq(schema.shops.ownerId, owner.id));
   if (already) {
     await startSession(already.id);
-    redirect("/");
+    redirect("/today");
   }
   const raw = Object.fromEntries(FIELDS.map((k) => [k, String(formData.get(k) ?? "")]));
   const parsed = Form.safeParse(raw);
@@ -81,7 +81,7 @@ export async function createShop(_prev: OnboardingState, formData: FormData): Pr
     pinHash: hashPin(parsed.data.pin),
   });
   await startSession(id);
-  redirect("/");
+  redirect("/today");
 }
 
 /** The demo shop holds only demo data, so it opens without a PIN. */
@@ -89,5 +89,5 @@ export async function openDemoShop(): Promise<void> {
   const [demo] = await db.select({ id: schema.shops.id }).from(schema.shops).where(eq(schema.shops.id, DEMO_SHOP_ID));
   if (!demo) redirect("/onboarding?demo=missing");
   await startSession(DEMO_SHOP_ID);
-  redirect("/");
+  redirect("/today");
 }
