@@ -7,6 +7,7 @@ import { appUrl, signPayLink, whatsappLink } from "../../../../src/lib/paylink";
 import { CopyLink } from "../../../../src/ui/copy-link";
 import { PIN_MESSAGES, pinRequired } from "../../../../src/lib/pin";
 import { PayQr } from "../../../../src/ui/qr";
+import { payLine } from "../../../../src/lib/reminder";
 import { markAsPaid, setLabel, setPromise, updateContact } from "./actions";
 import { EntryLine } from "../../../../src/ui/entry-line";
 import { LabelBadge, Section, shortDate, Stat } from "../../../../src/ui/kit";
@@ -28,7 +29,7 @@ export default async function CustomerPage({ params, searchParams }: { params: P
   const payUrl = owed > 0 ? `${appUrl()}/p/${signPayLink({ shopId: book.shop.id, customerId: id, amountKobo: owed })}` : "";
   const whatsapp =
     owed > 0 && customer.phone
-      ? whatsappLink(customer.phone, `Hello ${customer.name}, this is ${book.shop.name}. You owe ${formatNaira(owed)}. You can pay here: ${payUrl} Thank you!`)
+      ? whatsappLink(customer.phone, `Hello ${customer.name}, this is ${book.shop.name}. You owe ${formatNaira(owed)}. ${payLine(payUrl)} Thank you!`)
       : null;
 
   return (

@@ -4,6 +4,7 @@ import { db, schema } from "../db/client";
 import { emailConfigured, sendEmail } from "../lib/mailer";
 import { appUrl, signPayLink, whatsappLink } from "../lib/paylink";
 import { reminderMessage } from "../lib/reminder";
+import QRCode from "qrcode";
 
 const escape = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 
@@ -53,11 +54,16 @@ export async function sendDueReminders(): Promise<ReminderRun> {
       // The customer is emailed on the promised day itself, once.
       if (c.email && r.dueTodayKobo > 0 && (await claim(shop.id, c.id, today))) {
         try {
+          // A QR of the same pay link, for a customer reading the email on a laptop who pays from the wallet on their phone.
+          const qr = await QRCode.toBuffer(payUrl, { type: "png", errorCorrectionLevel: "M", margin: 2, width: 240 });
           await sendEmail({
             to: c.email,
             subject: `Reminder from ${shop.name}: payment due today`,
             text: message,
-            html: `<p>${escape(message).replace(escape(payUrl), `<a href="${escape(payUrl)}">${escape(payUrl)}</a>`)}</p>`,
+            html:
+              `<p>${escape(message).replace(escape(payUrl), `<a href="${escape(payUrl)}">${escape(payUrl)}</a>`)}</p>` +
+              `<p><img src="cid:payqr" width="200" height="200" alt="QR code that opens the pay page"><br>Or scan this with your phone's camera to open the pay page.</p>`,
+            images: [{ cid: "payqr", filename: "pay-qr.png", content: qr }],
           });
           run.customersEmailed++;
         } catch (err) {
